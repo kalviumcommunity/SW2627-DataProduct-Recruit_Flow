@@ -1,0 +1,5 @@
+onboarding_id,offer_id,application_id,candidate_id,planned_joining_date,actual_joining_date,joining_status,no_join_reason,onboarding_completed
+ONB-00001,OFF-00004,APP-0045,CAND-0039,2026-09-12,2026-09-14,Cancelled,,True
+ONB-00002,OFF-00005,APP-0047,CAND-0044,2026-08-05,2026-08-10,Postponed,,False
+ONB-00003,OFF-00008,APP-0073,CAND-0015,09/20/2026,09/25/2026,Cancelled,,True
+ONB-00004,OFF-00009,APP-0074,CAND-0046,2026-08-16,,Cancelled,,True
