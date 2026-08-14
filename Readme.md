@@ -1,3 +1,5 @@
+Figma Link: https://www.figma.com/design/sAO0tljssGVB0HjBW1TUV4/Prescripto---UI-Design--Copy-?node-id=0-1&t=CnySVXbCdrDlbsON-1
+
 # HR Recruitment Intelligence Platform
 
 An HR analytics platform that brings recruitment data from different sources into one clean, connected system and turns it into clear hiring insights.
