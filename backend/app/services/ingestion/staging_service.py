@@ -56,7 +56,7 @@ def process_batch_to_staging(batch_id: str):
             """, (accepted_count, rejected_count, batch_id))
             conn.commit()
     
-    print(f"✅ Validation complete for batch {batch_id}: {accepted_count} accepted, {rejected_count} rejected")
+    print(f"Validation complete for batch {batch_id}: {accepted_count} accepted, {rejected_count} rejected")
     return accepted_count, rejected_count
 
 def insert_staging_record(
