@@ -18,7 +18,12 @@ def parse_file_to_raw_records(file_path: str, file_type: str) -> Dict[str, List[
     
     if file_type == "csv":
         # CSV contains only one entity type. We infer the entity from the filename.
-        entity_name = path.stem.split('_')[-1] if '_' in path.stem else path.stem
+        entity_name = next(
+            (entity for entity in ENTITY_TYPES if path.stem.endswith(entity)),
+            None
+        )
+        if entity_name is None:
+            entity_name = path.stem.split('_')[-1] if '_' in path.stem else path.stem
         if entity_name in ENTITY_TYPES:
             df = pd.read_csv(file_path, dtype=str, keep_default_na=False)
             # Convert NaN to None for JSON serialization
@@ -65,4 +70,4 @@ def store_raw_records(batch_id: str, parsed_data: Dict[str, List[Dict]], source_
             """, (total_rows, batch_id))
             conn.commit()
     
-    print(f"✅ Stored {total_rows} raw records for batch {batch_id}")
+    print(f"Stored {total_rows} raw records for batch {batch_id}")
