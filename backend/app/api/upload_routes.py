@@ -4,6 +4,7 @@ from app.services.ingestion.file_handler import (
     save_uploaded_file, create_ingestion_batch, update_batch_status, calculate_file_hash
 )
 from app.services.ingestion.parser import parse_file_to_raw_records, store_raw_records
+from app.services.ingestion.staging_service import process_batch_to_staging
 from app.core.config import settings
 
 router = APIRouter(prefix="/uploads", tags=["Ingestion"])
@@ -40,14 +41,17 @@ async def upload_file(
         
         # 6. Store raw records in the database
         store_raw_records(batch_id, parsed_data, file.filename)
-        
-        # 7. Update status to 'raw_stored'
-        update_batch_status(batch_id, "raw_stored")
-        
+
+        # 7. Validate and move valid records to staging
+        accepted, rejected = process_batch_to_staging(batch_id)
+
+        # 8. Return ingestion result
         return {
             "batch_id": batch_id,
-            "status": "raw_stored",
+            "status": "validated",
             "total_rows": sum(len(rows) for rows in parsed_data.values()),
+            "accepted_rows": accepted,
+            "rejected_rows": rejected,
             "entities_found": list(parsed_data.keys())
         }
     
