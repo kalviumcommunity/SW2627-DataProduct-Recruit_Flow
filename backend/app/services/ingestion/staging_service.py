@@ -4,6 +4,17 @@ from typing import Dict, List
 from app.core.database import get_connection
 from app.services.ingestion.validator import validate_record
 
+
+def _json_safe(value):
+    """Recursively convert values into JSON-serializable shapes."""
+    if isinstance(value, dict):
+        return {key: _json_safe(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_json_safe(item) for item in value]
+    if isinstance(value, tuple):
+        return [_json_safe(item) for item in value]
+    return value
+
 def process_batch_to_staging(batch_id: str):
     """
     Reads all raw records for a batch, validates them, and inserts valid records
@@ -125,7 +136,7 @@ def insert_validation_error(conn, batch_id: str, entity_type: str, row_num: int,
     """Inserts a validation error record."""
     with conn.cursor() as cur:
         error_message = "; ".join(errors)
-        raw_payload = json.dumps(raw_json) if isinstance(raw_json, dict) else raw_json
+        raw_payload = json.dumps(_json_safe(raw_json), default=str) if isinstance(raw_json, dict) else raw_json
         cur.execute("""
             INSERT INTO core.validation_errors 
             (ingestion_batch_id, entity_type, source_row_number, error_message, raw_data)
