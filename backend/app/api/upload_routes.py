@@ -6,6 +6,7 @@ from app.services.ingestion.file_handler import (
 from app.services.ingestion.parser import parse_file_to_raw_records, store_raw_records
 from app.services.ingestion.staging_service import process_batch_to_staging
 from app.services.ingestion.cleaner import clean_batch
+from app.services.ingestion.deduplicator import deduplicate_batch
 from app.core.config import settings
 
 router = APIRouter(prefix="/uploads", tags=["Ingestion"])
@@ -49,14 +50,18 @@ async def upload_file(
         # 8. Clean the validated records
         cleaned_rows = clean_batch(batch_id)
 
-        # 9. Return ingestion result
+        # 9. Deduplicate and load into core
+        core_loaded = deduplicate_batch(batch_id)
+
+        # 10. Return ingestion result
         return {
             "batch_id": batch_id,
-            "status": "cleaned",
+            "status": "core_loaded",
             "total_rows": sum(len(rows) for rows in parsed_data.values()),
             "accepted_rows": accepted,
             "rejected_rows": rejected,
             "cleaned_rows": cleaned_rows,
+            "core_loaded": core_loaded,
             "entities_found": list(parsed_data.keys())
         }
     
