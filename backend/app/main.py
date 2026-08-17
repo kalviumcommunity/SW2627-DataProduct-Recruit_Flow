@@ -16,12 +16,13 @@
 
 # backend/app/main.py
 from fastapi import FastAPI
-from app.api import upload_routes
+from app.api import analytics_routes, upload_routes
 
 app = FastAPI(title="RecruitFlow API", version="0.1.0")
 
 # Include your routes
 app.include_router(upload_routes.router)
+app.include_router(analytics_routes.router)
 
 @app.get("/")
 async def root():
