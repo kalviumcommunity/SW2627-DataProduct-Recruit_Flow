@@ -7,6 +7,7 @@ from app.services.ingestion.parser import parse_file_to_raw_records, store_raw_r
 from app.services.ingestion.staging_service import process_batch_to_staging
 from app.services.ingestion.cleaner import clean_batch
 from app.services.ingestion.deduplicator import deduplicate_batch
+from app.services.ingestion.journey_builder import derive_missing_applied_stage, ensure_chronological_ordering
 from app.core.config import settings
 
 router = APIRouter(prefix="/uploads", tags=["Ingestion"])
@@ -53,15 +54,22 @@ async def upload_file(
         # 9. Deduplicate and load into core
         core_loaded = deduplicate_batch(batch_id)
 
-        # 10. Return ingestion result
+        # 10. Reconstruct candidate journeys
+        derived_stages = derive_missing_applied_stage(batch_id)
+        ensure_chronological_ordering(batch_id)
+
+        update_batch_status(batch_id, "journey_reconstructed")
+
+        # 11. Return ingestion result
         return {
             "batch_id": batch_id,
-            "status": "core_loaded",
+            "status": "journey_reconstructed",
             "total_rows": sum(len(rows) for rows in parsed_data.values()),
             "accepted_rows": accepted,
             "rejected_rows": rejected,
             "cleaned_rows": cleaned_rows,
             "core_loaded": core_loaded,
+            "derived_stages": derived_stages,
             "entities_found": list(parsed_data.keys())
         }
     
