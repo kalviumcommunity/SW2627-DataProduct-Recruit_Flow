@@ -9,8 +9,20 @@ import app.models as models
 import app.schemas as schemas
 from app.auth import get_password_hash, verify_password, create_access_token, get_current_user
 
-# Include teammates' data ingestion routes
-from app.api import upload_routes
+# @app.get("/")
+# async def root():
+#     return {"message": "RecruitFlow Data Ingestion API is live"}
+
+
+
+
+# # Import routes later
+# # from app.api import upload_routes, health_routes
+# # app.include_router(upload_routes.router)
+
+# backend/app/main.py
+from fastapi import FastAPI
+from app.api import analytics_routes, upload_routes
 
 # Initialize the FastAPI application
 app = FastAPI(
@@ -28,6 +40,7 @@ except Exception as e:
 
 # Include teammates' upload/ingestion router
 app.include_router(upload_routes.router)
+app.include_router(analytics_routes.router)
 
 # Root endpoint to verify if the server is running
 @app.get("/")
