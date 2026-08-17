@@ -1,7 +1,8 @@
 # backend/app/services/ingestion/validator.py
 import json
+import math
 from datetime import datetime
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Optional
 from app.core.database import get_connection
 
 # Canonical reference data (must match your core tables)
@@ -11,6 +12,10 @@ CANONICAL_STAGES = {
     "Technical Interview", "Final Interview", "Offer", "Offer Accepted", "Joined"
 }
 VALID_OUTCOMES = {"Passed", "Failed", "Withdrew", "Offered", "Joined"}
+VALID_INTERVIEW_STATUSES = {"Scheduled", "Completed", "Cancelled"}
+VALID_INTERVIEW_RECOMMENDATIONS = {"Strong Hire", "Hire", "Leaning No", "No Hire"}
+VALID_OFFER_STATUSES = {"Sent", "Accepted", "Declined", "Expired"}
+VALID_JOINING_STATUSES = {"Joined", "No Show", "Postponed", "Cancelled"}
 
 # Entity-specific validation rules
 REQUIRED_FIELDS = {
@@ -18,9 +23,9 @@ REQUIRED_FIELDS = {
     "jobs": ["job_id", "job_title", "department"],
     "applications": ["application_id", "candidate_id", "job_id", "application_date"],
     "stage_events": ["stage_event_id", "application_id", "stage_name", "entered_at"],
-    "interviews": ["interview_id", "application_id"],
-    "offers": ["offer_id", "application_id"],
-    "onboarding": ["onboarding_id", "application_id"]
+    "interviews": ["interview_id", "application_id", "candidate_id", "interview_type", "scheduled_at", "interview_status"],
+    "offers": ["offer_id", "application_id", "candidate_id", "offer_date", "offered_role", "offer_status"],
+    "onboarding": ["onboarding_id", "offer_id", "application_id", "candidate_id", "planned_joining_date", "joining_status"]
 }
 
 def validate_required_fields(row: Dict, entity_type: str) -> List[str]:
@@ -50,6 +55,69 @@ def validate_date_format(date_str: str) -> bool:
         except ValueError:
             continue
     return False
+
+def validate_datetime_format(datetime_str: str) -> bool:
+    """Attempts to parse common timestamp formats."""
+    if not datetime_str or not isinstance(datetime_str, str):
+        return False
+    formats = [
+        "%Y-%m-%dT%H:%M:%S",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%dT%H:%M:%S.%f",
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%Y-%m-%dT%H:%M:%S%z",
+        "%Y-%m-%d %H:%M:%S%z",
+    ]
+    for fmt in formats:
+        try:
+            datetime.strptime(datetime_str, fmt)
+            return True
+        except ValueError:
+            continue
+    return validate_date_format(datetime_str)
+
+def validate_numeric_score(value: Any, min_value: float = 0.0, max_value: float = 5.0) -> Tuple[bool, Optional[float]]:
+    """Validate a score-like field and coerce to float if possible."""
+    if value is None:
+        return True, None
+    cleaned = str(value).strip()
+    if cleaned == "":
+        return True, None
+    try:
+        parsed = float(cleaned)
+    except ValueError:
+        return False, None
+    if not math.isfinite(parsed):
+        return False, None
+    if parsed < min_value or parsed > max_value:
+        return False, None
+    return True, parsed
+
+def validate_canonical_value(value: str, allowed_values: set[str]) -> Tuple[bool, str]:
+    """Case-insensitive exact matching against a canonical vocabulary."""
+    if not value:
+        return False, ""
+    cleaned = value.strip()
+    for canonical in allowed_values:
+        if cleaned.lower() == canonical.lower():
+            return True, canonical
+    return False, cleaned
+
+def reference_exists(conn, table: str, column: str, value: str) -> bool:
+    """Checks whether a canonical reference row exists in core."""
+    if not value:
+        return False
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT 1
+            FROM {table}
+            WHERE {column} = %s
+            LIMIT 1
+            """,
+            (value,),
+        )
+        return cur.fetchone() is not None
 
 def validate_department(dept_str: str) -> Tuple[bool, str]:
     """
@@ -105,7 +173,7 @@ def validate_boolean_flag(flag_str: str) -> Tuple[bool, bool]:
     else:
         return False, False  # Invalid boolean value
 
-def validate_record(row: Dict, entity_type: str, row_number: int) -> Dict[str, Any]:
+def validate_record(row: Dict, entity_type: str, row_number: int, conn=None) -> Dict[str, Any]:
     """
     Main validation orchestrator.
     Returns a dict with:
@@ -194,7 +262,149 @@ def validate_record(row: Dict, entity_type: str, row_number: int) -> Dict[str, A
         # Business rule: if dropoff_flag is True, reason must be present
         if cleaned_data.get("dropoff_flag", False) and not dropoff_reason:
             warnings.append("dropoff_flag is TRUE but dropoff_reason is empty. Will be flagged during journey reconstruction.")
-    
+
+    elif entity_type == "interviews":
+        interview_id = row.get("interview_id", "")
+        application_id = row.get("application_id", "")
+        candidate_id = row.get("candidate_id", "")
+
+        if conn and not reference_exists(conn, "core.applications", "application_id", application_id):
+            errors.append(f"Unknown application_id: '{application_id}'")
+        if conn and not reference_exists(conn, "core.candidates", "candidate_id", candidate_id):
+            errors.append(f"Unknown candidate_id: '{candidate_id}'")
+
+        scheduled = row.get("scheduled_at", "")
+        if scheduled:
+            if not validate_datetime_format(scheduled):
+                errors.append(f"Invalid scheduled_at format: '{scheduled}'")
+            else:
+                cleaned_data["scheduled_at"] = scheduled
+        else:
+            errors.append("scheduled_at is required")
+
+        completed = row.get("completed_at", "")
+        if completed:
+            if not validate_datetime_format(completed):
+                errors.append(f"Invalid completed_at format: '{completed}'")
+            else:
+                cleaned_data["completed_at"] = completed
+
+        status = row.get("interview_status", "")
+        is_valid, canonical_status = validate_canonical_value(status, VALID_INTERVIEW_STATUSES)
+        if is_valid:
+            cleaned_data["interview_status"] = canonical_status
+        else:
+            errors.append(f"Invalid interview_status: '{status}'")
+
+        recommendation = row.get("recommendation", "")
+        if recommendation:
+            rec_valid, canonical_rec = validate_canonical_value(recommendation, VALID_INTERVIEW_RECOMMENDATIONS)
+            if rec_valid:
+                cleaned_data["recommendation"] = canonical_rec
+            else:
+                warnings.append(f"Unrecognized recommendation: '{recommendation}'")
+
+        for score_field in ("technical_score", "communication_score", "overall_score"):
+            score_valid, parsed_score = validate_numeric_score(row.get(score_field))
+            if not score_valid:
+                errors.append(f"Invalid {score_field}: '{row.get(score_field)}'")
+            elif parsed_score is not None:
+                cleaned_data[score_field] = parsed_score
+
+        if not cleaned_data.get("interview_type"):
+            cleaned_data["interview_type"] = row.get("interview_type", "").strip()
+
+    elif entity_type == "offers":
+        application_id = row.get("application_id", "")
+        candidate_id = row.get("candidate_id", "")
+
+        if conn and not reference_exists(conn, "core.applications", "application_id", application_id):
+            errors.append(f"Unknown application_id: '{application_id}'")
+        if conn and not reference_exists(conn, "core.candidates", "candidate_id", candidate_id):
+            errors.append(f"Unknown candidate_id: '{candidate_id}'")
+
+        offer_date = row.get("offer_date", "")
+        if offer_date:
+            if not validate_date_format(offer_date):
+                errors.append(f"Invalid offer_date format: '{offer_date}'")
+            else:
+                cleaned_data["offer_date"] = offer_date
+        else:
+            errors.append("offer_date is required")
+
+        joining_date = row.get("joining_date", "")
+        if joining_date:
+            if not validate_date_format(joining_date):
+                errors.append(f"Invalid joining_date format: '{joining_date}'")
+            else:
+                cleaned_data["joining_date"] = joining_date
+
+        response_date = row.get("response_date", "")
+        if response_date:
+            if not validate_date_format(response_date):
+                errors.append(f"Invalid response_date format: '{response_date}'")
+            else:
+                cleaned_data["response_date"] = response_date
+
+        status = row.get("offer_status", "")
+        is_valid, canonical_status = validate_canonical_value(status, VALID_OFFER_STATUSES)
+        if is_valid:
+            cleaned_data["offer_status"] = canonical_status
+        else:
+            errors.append(f"Invalid offer_status: '{status}'")
+
+        salary = row.get("offered_salary", "")
+        if salary:
+            try:
+                cleaned_data["offered_salary"] = float(str(salary).strip())
+            except ValueError:
+                errors.append(f"Invalid offered_salary: '{salary}'")
+
+    elif entity_type == "onboarding":
+        offer_id = row.get("offer_id", "")
+        application_id = row.get("application_id", "")
+        candidate_id = row.get("candidate_id", "")
+
+        if conn and not reference_exists(conn, "core.offers", "offer_id", offer_id):
+            errors.append(f"Unknown offer_id: '{offer_id}'")
+        if conn and not reference_exists(conn, "core.applications", "application_id", application_id):
+            errors.append(f"Unknown application_id: '{application_id}'")
+        if conn and not reference_exists(conn, "core.candidates", "candidate_id", candidate_id):
+            errors.append(f"Unknown candidate_id: '{candidate_id}'")
+
+        planned = row.get("planned_joining_date", "")
+        if planned:
+            if not validate_date_format(planned):
+                errors.append(f"Invalid planned_joining_date format: '{planned}'")
+            else:
+                cleaned_data["planned_joining_date"] = planned
+        else:
+            errors.append("planned_joining_date is required")
+
+        actual = row.get("actual_joining_date", "")
+        if actual:
+            if not validate_date_format(actual):
+                errors.append(f"Invalid actual_joining_date format: '{actual}'")
+            else:
+                cleaned_data["actual_joining_date"] = actual
+
+        status = row.get("joining_status", "")
+        is_valid, canonical_status = validate_canonical_value(status, VALID_JOINING_STATUSES)
+        if is_valid:
+            cleaned_data["joining_status"] = canonical_status
+        else:
+            errors.append(f"Invalid joining_status: '{status}'")
+
+        completed = row.get("onboarding_completed", "")
+        if completed:
+            bool_valid, bool_val = validate_boolean_flag(completed)
+            if bool_valid:
+                cleaned_data["onboarding_completed"] = bool_val
+            else:
+                errors.append(f"Invalid onboarding_completed value: '{completed}'")
+        else:
+            cleaned_data["onboarding_completed"] = False
+
     # 3. Copy all other fields to cleaned_data (preserve original values for later)
     for key, value in row.items():
         if key not in cleaned_data:

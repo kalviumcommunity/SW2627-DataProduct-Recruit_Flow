@@ -7,6 +7,21 @@ from typing import Dict, List, Any
 # Allowed entity types (must match our file names)
 ENTITY_TYPES = ["candidates", "jobs", "applications", "stage_events", "interviews", "offers", "onboarding"]
 
+def infer_entity_type_from_filename(stem: str) -> str | None:
+    """Infer the entity type from a filename stem using exact token matching first."""
+    normalized_stem = stem.lower()
+    tokens = [token for token in normalized_stem.replace("-", "_").split("_") if token]
+
+    for entity in ENTITY_TYPES:
+        if entity in tokens:
+            return entity
+
+    for entity in ENTITY_TYPES:
+        if entity in normalized_stem:
+            return entity
+
+    return None
+
 def parse_file_to_raw_records(file_path: str, file_type: str) -> Dict[str, List[Dict[str, Any]]]:
     """
     Parses a CSV or Excel file and returns a dictionary of entity_type -> list of rows.
@@ -18,12 +33,7 @@ def parse_file_to_raw_records(file_path: str, file_type: str) -> Dict[str, List[
     
     if file_type == "csv":
         # CSV contains only one entity type. We infer the entity from the filename.
-        entity_name = next(
-            (entity for entity in ENTITY_TYPES if path.stem.endswith(entity)),
-            None
-        )
-        if entity_name is None:
-            entity_name = path.stem.split('_')[-1] if '_' in path.stem else path.stem
+        entity_name = infer_entity_type_from_filename(path.stem)
         if entity_name in ENTITY_TYPES:
             df = pd.read_csv(file_path, dtype=str, keep_default_na=False)
             # Convert NaN to None for JSON serialization
