@@ -282,6 +282,103 @@ def resolve_application(cur, application_id: str) -> Optional[int]:
     return result[0] if result else None
 
 
+def resolve_application_details(cur, application_id: str) -> Tuple[Optional[int], Optional[int]]:
+    cur.execute(
+        """
+        SELECT id, candidate_id
+        FROM core.applications
+        WHERE application_id = %s
+        """,
+        (application_id,),
+    )
+    result = cur.fetchone()
+    if not result:
+        return None, None
+    return result[0], result[1]
+
+
+def resolve_core_candidate_id(cur, candidate_id: str) -> Optional[int]:
+    cur.execute(
+        """
+        SELECT id
+        FROM core.candidates
+        WHERE candidate_id = %s
+        """,
+        (candidate_id,),
+    )
+    result = cur.fetchone()
+    return result[0] if result else None
+
+
+def resolve_core_offer_id(cur, offer_id: str) -> Optional[int]:
+    cur.execute(
+        """
+        SELECT id
+        FROM core.offers
+        WHERE offer_id = %s
+        """,
+        (offer_id,),
+    )
+    result = cur.fetchone()
+    return result[0] if result else None
+
+
+def _resolve_application_and_candidate(
+    cur,
+    row: Dict[str, Any],
+    batch_id: str,
+    entity_type: str,
+) -> Tuple[Optional[int], Optional[int]]:
+    application_external_id = row.get("application_id")
+    candidate_external_id = row.get("candidate_id")
+
+    app_internal_id, app_candidate_id = resolve_application_details(cur, application_external_id)
+    if not app_internal_id:
+        _record_load_error(
+            cur,
+            batch_id,
+            entity_type,
+            row.get("source_row_number"),
+            row.get(f"{entity_type[:-1]}_id") if row.get(f"{entity_type[:-1]}_id") else application_external_id,
+            f"Application '{application_external_id}' not found in core.applications",
+            row,
+        )
+        return None, None
+
+    candidate_core_id = None
+    if candidate_external_id:
+        candidate_core_id = resolve_core_candidate_id(cur, candidate_external_id)
+
+    if candidate_core_id and app_candidate_id and candidate_core_id != app_candidate_id:
+        _record_load_error(
+            cur,
+            batch_id,
+            entity_type,
+            row.get("source_row_number"),
+            row.get(f"{entity_type[:-1]}_id") if row.get(f"{entity_type[:-1]}_id") else application_external_id,
+            f"Candidate '{candidate_external_id}' does not match application '{application_external_id}'",
+            row,
+        )
+        return None, None
+
+    if not candidate_core_id:
+        candidate_core_id = app_candidate_id
+
+    if not candidate_core_id:
+        _record_load_error(
+            cur,
+            batch_id,
+            entity_type,
+            row.get("source_row_number"),
+            row.get(f"{entity_type[:-1]}_id") if row.get(f"{entity_type[:-1]}_id") else application_external_id,
+            f"Candidate for application '{application_external_id}' could not be resolved",
+            row,
+        )
+        return None, None
+
+    return app_internal_id, candidate_core_id
+
+
 def _fetch_staging_row_by_external_id(cur, table_name: str, id_column: str, external_id: str) -> Optional[Dict[str, Any]]:
     cur.execute(
         f"""
@@ -309,6 +406,9 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
         "jobs_loaded": 0,
         "applications_loaded": 0,
         "stage_events_loaded": 0,
+        "interviews_loaded": 0,
+        "offers_loaded": 0,
+        "onboarding_loaded": 0,
         "duplicates_skipped": 0,
         "possible_duplicates_flagged": 0,
         "load_errors_recorded": 0,
@@ -584,6 +684,241 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
                 )
                 counts["stage_events_loaded"] += 1
 
+            # Interviews
+            cur.execute(
+                """
+                SELECT *
+                FROM staging.interviews
+                WHERE ingestion_batch_id = %s
+                  AND cleaned_status IN ('cleaned', 'review')
+                ORDER BY source_row_number, staging_record_id
+                """,
+                (batch_id,),
+            )
+            interview_rows = cur.fetchall()
+            interview_cols = [desc[0] for desc in cur.description]
+
+            for record in interview_rows:
+                row = dict(zip(interview_cols, record))
+                interview_id = row.get("interview_id")
+                if not interview_id:
+                    continue
+
+                cur.execute(
+                    """
+                    SELECT id
+                    FROM core.interviews
+                    WHERE interview_id = %s
+                    """,
+                    (interview_id,),
+                )
+                if cur.fetchone():
+                    counts["duplicates_skipped"] += 1
+                    _record_load_error(
+                        cur,
+                        batch_id,
+                        "interviews",
+                        row.get("source_row_number"),
+                        interview_id,
+                        "Duplicate interview_id already exists in core.interviews",
+                        row,
+                    )
+                    counts["load_errors_recorded"] += 1
+                    continue
+
+                app_id, candidate_id = _resolve_application_and_candidate(cur, row, batch_id, "interviews")
+                if not app_id or not candidate_id:
+                    counts["load_errors_recorded"] += 1
+                    continue
+
+                cur.execute(
+                    """
+                    INSERT INTO core.interviews
+                    (interview_id, application_id, candidate_id, interview_type, scheduled_at, completed_at,
+                     interview_status, technical_score, communication_score, overall_score, recommendation,
+                     feedback, ingestion_batch_id, source_row_number)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        interview_id,
+                        app_id,
+                        candidate_id,
+                        row.get("interview_type"),
+                        row.get("scheduled_at"),
+                        row.get("completed_at"),
+                        row.get("interview_status"),
+                        row.get("technical_score"),
+                        row.get("communication_score"),
+                        row.get("overall_score"),
+                        row.get("recommendation"),
+                        row.get("feedback"),
+                        batch_id,
+                        row.get("source_row_number"),
+                    ),
+                )
+                counts["interviews_loaded"] += 1
+
+            # Offers
+            cur.execute(
+                """
+                SELECT *
+                FROM staging.offers
+                WHERE ingestion_batch_id = %s
+                  AND cleaned_status IN ('cleaned', 'review')
+                ORDER BY source_row_number, staging_record_id
+                """,
+                (batch_id,),
+            )
+            offer_rows = cur.fetchall()
+            offer_cols = [desc[0] for desc in cur.description]
+
+            for record in offer_rows:
+                row = dict(zip(offer_cols, record))
+                offer_id = row.get("offer_id")
+                if not offer_id:
+                    continue
+
+                cur.execute(
+                    """
+                    SELECT id
+                    FROM core.offers
+                    WHERE offer_id = %s
+                    """,
+                    (offer_id,),
+                )
+                if cur.fetchone():
+                    counts["duplicates_skipped"] += 1
+                    _record_load_error(
+                        cur,
+                        batch_id,
+                        "offers",
+                        row.get("source_row_number"),
+                        offer_id,
+                        "Duplicate offer_id already exists in core.offers",
+                        row,
+                    )
+                    counts["load_errors_recorded"] += 1
+                    continue
+
+                app_id, candidate_id = _resolve_application_and_candidate(cur, row, batch_id, "offers")
+                if not app_id or not candidate_id:
+                    counts["load_errors_recorded"] += 1
+                    continue
+
+                cur.execute(
+                    """
+                    INSERT INTO core.offers
+                    (offer_id, application_id, candidate_id, offer_date, offered_role, offered_salary,
+                     currency, joining_date, offer_status, response_date, offer_rejection_reason,
+                     ingestion_batch_id, source_row_number)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        offer_id,
+                        app_id,
+                        candidate_id,
+                        row.get("offer_date"),
+                        row.get("offered_role"),
+                        row.get("offered_salary"),
+                        row.get("currency"),
+                        row.get("joining_date"),
+                        row.get("offer_status"),
+                        row.get("response_date"),
+                        row.get("offer_rejection_reason"),
+                        batch_id,
+                        row.get("source_row_number"),
+                    ),
+                )
+                counts["offers_loaded"] += 1
+
+            # Onboarding
+            cur.execute(
+                """
+                SELECT *
+                FROM staging.onboarding
+                WHERE ingestion_batch_id = %s
+                  AND cleaned_status IN ('cleaned', 'review')
+                ORDER BY source_row_number, staging_record_id
+                """,
+                (batch_id,),
+            )
+            onboarding_rows = cur.fetchall()
+            onboarding_cols = [desc[0] for desc in cur.description]
+
+            for record in onboarding_rows:
+                row = dict(zip(onboarding_cols, record))
+                onboarding_id = row.get("onboarding_id")
+                if not onboarding_id:
+                    continue
+
+                cur.execute(
+                    """
+                    SELECT id
+                    FROM core.onboarding
+                    WHERE onboarding_id = %s
+                    """,
+                    (onboarding_id,),
+                )
+                if cur.fetchone():
+                    counts["duplicates_skipped"] += 1
+                    _record_load_error(
+                        cur,
+                        batch_id,
+                        "onboarding",
+                        row.get("source_row_number"),
+                        onboarding_id,
+                        "Duplicate onboarding_id already exists in core.onboarding",
+                        row,
+                    )
+                    counts["load_errors_recorded"] += 1
+                    continue
+
+                app_id, candidate_id = _resolve_application_and_candidate(cur, row, batch_id, "onboarding")
+                if not app_id or not candidate_id:
+                    counts["load_errors_recorded"] += 1
+                    continue
+
+                offer_core_id = resolve_core_offer_id(cur, row.get("offer_id"))
+                if not offer_core_id:
+                    _record_load_error(
+                        cur,
+                        batch_id,
+                        "onboarding",
+                        row.get("source_row_number"),
+                        onboarding_id,
+                        f"Offer '{row.get('offer_id')}' not found in core.offers",
+                        row,
+                    )
+                    counts["load_errors_recorded"] += 1
+                    continue
+
+                cur.execute(
+                    """
+                    INSERT INTO core.onboarding
+                    (onboarding_id, offer_id, application_id, candidate_id, planned_joining_date,
+                     actual_joining_date, joining_status, no_join_reason, onboarding_completed,
+                     ingestion_batch_id, source_row_number)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        onboarding_id,
+                        offer_core_id,
+                        app_id,
+                        candidate_id,
+                        row.get("planned_joining_date"),
+                        row.get("actual_joining_date"),
+                        row.get("joining_status"),
+                        row.get("no_join_reason"),
+                        row.get("onboarding_completed"),
+                        batch_id,
+                        row.get("source_row_number"),
+                    ),
+                )
+                counts["onboarding_loaded"] += 1
+
             cur.execute(
                 """
                 UPDATE core.ingestion_batches
@@ -600,6 +935,9 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
     print(f"  - Jobs: {counts['jobs_loaded']}")
     print(f"  - Applications: {counts['applications_loaded']}")
     print(f"  - Stage Events: {counts['stage_events_loaded']}")
+    print(f"  - Interviews: {counts['interviews_loaded']}")
+    print(f"  - Offers: {counts['offers_loaded']}")
+    print(f"  - Onboarding: {counts['onboarding_loaded']}")
     print(f"  - Duplicates skipped: {counts['duplicates_skipped']}")
     print(f"  - Possible duplicates flagged: {counts['possible_duplicates_flagged']}")
     print(f"  - Load errors recorded: {counts['load_errors_recorded']}")
