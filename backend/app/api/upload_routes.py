@@ -19,7 +19,11 @@ from app.services.ingestion.parser import parse_file_to_raw_records, store_raw_r
 from app.services.ingestion.staging_service import process_batch_to_staging
 from app.services.ingestion.cleaner import clean_batch
 from app.services.ingestion.deduplicator import deduplicate_batch
-from app.services.ingestion.journey_builder import derive_missing_applied_stage, ensure_chronological_ordering
+from app.services.ingestion.journey_builder import (
+    derive_missing_applied_stage,
+    derive_supporting_journey_events,
+    ensure_chronological_ordering,
+)
 from app.core.config import settings
 
 router = APIRouter(prefix="/uploads", tags=["Ingestion"])
@@ -68,6 +72,7 @@ async def upload_file(
 
         # 10. Reconstruct candidate journeys
         derived_stages = derive_missing_applied_stage(batch_id)
+        derived_stages += derive_supporting_journey_events(batch_id)
         ensure_chronological_ordering(batch_id)
 
         update_batch_status(batch_id, "journey_reconstructed")
