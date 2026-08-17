@@ -130,7 +130,50 @@ def insert_staging_record(
                 data.get("entered_at"), data.get("exited_at"), data.get("stage_outcome"),
                 data.get("dropoff_flag", False), data.get("dropoff_reason")
             ))
-        # Add other entity types similarly...
+        
+        elif entity_type == "interviews":
+            cur.execute("""
+                INSERT INTO staging.interviews
+                (ingestion_batch_id, raw_record_id, source_row_number, validation_status, validation_error_count,
+                 interview_id, application_id, candidate_id, interview_type, scheduled_at, completed_at,
+                 interview_status, technical_score, communication_score, overall_score, recommendation, feedback)
+                VALUES (%s, %s, %s, %s, 0, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                batch_id, raw_id, row_num, validation_status,
+                data.get("interview_id"), data.get("application_id"), data.get("candidate_id"),
+                data.get("interview_type"), data.get("scheduled_at"), data.get("completed_at"),
+                data.get("interview_status"), data.get("technical_score"), data.get("communication_score"),
+                data.get("overall_score"), data.get("recommendation"), data.get("feedback")
+            ))
+
+        elif entity_type == "offers":
+            cur.execute("""
+                INSERT INTO staging.offers
+                (ingestion_batch_id, raw_record_id, source_row_number, validation_status, validation_error_count,
+                 offer_id, application_id, candidate_id, offer_date, offered_role, offered_salary,
+                 currency, joining_date, offer_status, response_date, offer_rejection_reason)
+                VALUES (%s, %s, %s, %s, 0, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                batch_id, raw_id, row_num, validation_status,
+                data.get("offer_id"), data.get("application_id"), data.get("candidate_id"),
+                data.get("offer_date"), data.get("offered_role"), data.get("offered_salary"),
+                data.get("currency"), data.get("joining_date"), data.get("offer_status"),
+                data.get("response_date"), data.get("offer_rejection_reason")
+            ))
+
+        elif entity_type == "onboarding":
+            cur.execute("""
+                INSERT INTO staging.onboarding
+                (ingestion_batch_id, raw_record_id, source_row_number, validation_status, validation_error_count,
+                 onboarding_id, offer_id, application_id, candidate_id, planned_joining_date,
+                 actual_joining_date, joining_status, no_join_reason, onboarding_completed)
+                VALUES (%s, %s, %s, %s, 0, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                batch_id, raw_id, row_num, validation_status,
+                data.get("onboarding_id"), data.get("offer_id"), data.get("application_id"),
+                data.get("candidate_id"), data.get("planned_joining_date"), data.get("actual_joining_date"),
+                data.get("joining_status"), data.get("no_join_reason"), data.get("onboarding_completed")
+            ))
 
 def insert_validation_error(conn, batch_id: str, entity_type: str, row_num: int, errors: List[str], raw_json: str):
     """Inserts a validation error record."""
