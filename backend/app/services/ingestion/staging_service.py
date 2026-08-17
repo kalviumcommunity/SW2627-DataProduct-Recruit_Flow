@@ -39,7 +39,7 @@ def process_batch_to_staging(batch_id: str):
                 row_data = raw_json if isinstance(raw_json, dict) else json.loads(raw_json)
                 
                 # 2. Validate the record
-                result = validate_record(row_data, entity_type, row_num)
+                result = validate_record(row_data, entity_type, row_num, conn)
                 
                 if result["valid"]:
                     # 3. Insert into appropriate staging table
