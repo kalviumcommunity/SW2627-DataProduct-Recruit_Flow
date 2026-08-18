@@ -1,0 +1,11 @@
+offer_id,application_id,candidate_id,offer_date,offered_role,offered_salary,currency,joining_date,offer_status,response_date,offer_rejection_reason
+OFF-00001,APP-0005,CAND-0046,06/29/2026,Analyst,129168,US Dollars,,Sent,07/05/2026,
+OFF-00002,APP-0026,CAND-0047,2026-08-21,Product Manager,106135,USD,,Accepted,2026-08-28,
+OFF-00003,APP-0043,CAND-0011,08/21/2026,Senior Engineer,148094,USD,2026-09-08,Offer accepted,08/24/2026,
+OFF-00004,APP-0045,CAND-0039,2026-09-03,Sales Rep,126954,USD,2026-09-29,Sent,2026-09-06,
+OFF-00005,APP-0047,CAND-0044,2026-07-13, Sales Rep ,123788,USD,2026-08-01,Sent,2026-07-18,
+OFF-00006,APP-0057,CAND-0039,2026-07-12,Product Manager,119113,USD,2026-07-27,Sent,07/14/2026,Competing Offer
+OFF-00007,APP-0058,CAND-0002,06/30/2026,Analyst,133607,usd,2026-07-30,No hire,07/05/2026,Competing Offer
+OFF-00008,APP-0073,CAND-0015,2026-08-29,analyst,124054,USD,09/17/2026,Sent,,
+OFF-00009,APP-0074,CAND-0046,08/05/2026,Sales Rep,98284,US Dollars,,Rejected,,Competing Offer
+OFF-00010,APP-0076,CAND-0005,2026-08-22,Analyst,$132053,US Dollars,2026-09-21,Declined,,Salary Negotiation
