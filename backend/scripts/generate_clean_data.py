@@ -41,10 +41,12 @@ def generate_candidates(num):
         last = fake.last_name()
         candidates.append({
             "candidate_id": f"CAND-{i:04d}",
-            "email": f"{first.lower()}.{last.lower()}@example.com",
+            # Keep the clean dataset collision-free under email-based deduplication.
+            "email": f"{first.lower()}.{last.lower()}.{i:04d}@example.com",
             "first_name": first,
             "last_name": last,
-            "phone": fake.phone_number()[:15]
+            # Deterministic unique phone number to avoid accidental phone dedup matches.
+            "phone": f"+1-555-{i:07d}"
         })
     return candidates
 
@@ -54,7 +56,8 @@ def generate_jobs(num):
         dept = random.choice(DEPARTMENTS)
         jobs.append({
             "job_id": f"JOB-{i:04d}",
-            "job_title": f"{dept} {fake.job().split()[0]}",
+            # Unique enough for clean runs while still reading like a real role title.
+            "job_title": f"{dept} {fake.job().split()[0]} {i:03d}",
             "department": dept,
             "location": fake.city(),
             "employment_type": random.choice(["Full-time", "Contract"])
@@ -74,17 +77,21 @@ def generate_applications(candidates, jobs, num):
         })
     return applications
 
-def generate_stage_events(applications):
+def generate_stage_events(applications, profile=None):
     """Generates stage events AND returns the final timeline for each app to be used for interviews/offers."""
     stage_events = []
     final_stage_per_app = {}  # Store the last stage info for each application
     event_id = 1
+    profile = profile or {}
+    stage_weights = profile.get("stage_weights", [5, 8, 10, 15, 12, 8, 5, 3, 1])
+    pre_offer_outcome_weights = profile.get("pre_offer_outcome_weights", [60, 25, 15])
+    offer_plus_outcome_weights = profile.get("offer_plus_outcome_weights", [70, 20, 10])
 
     for app in applications:
         # Determine max stage index (how far they go in the funnel)
         max_idx = random.choices(
             population=range(1, len(STAGES) + 1),
-            weights=[5, 8, 10, 15, 12, 8, 5, 3, 1],
+            weights=stage_weights,
             k=1
         )[0]
         
@@ -107,9 +114,9 @@ def generate_stage_events(applications):
             else:
                 # Final stage logic
                 if stage_idx >= 7:  # Offer or later
-                    outcome = random.choices(["Passed", "Passed", "Failed"], weights=[70, 20, 10])[0]
+                    outcome = random.choices(["Passed", "Passed", "Failed"], weights=offer_plus_outcome_weights)[0]
                 else:
-                    outcome = random.choices(["Passed", "Failed", "Withdrew"], weights=[60, 25, 15])[0]
+                    outcome = random.choices(["Passed", "Failed", "Withdrew"], weights=pre_offer_outcome_weights)[0]
                 
                 if outcome == "Passed":
                     exited_at = current_time + timedelta(days=random.randint(1, 5))
@@ -150,10 +157,13 @@ def generate_stage_events(applications):
     
     return stage_events, final_stage_per_app
 
-def generate_interviews(applications, final_stage_per_app):
+def generate_interviews(applications, final_stage_per_app, profile=None):
     """Generates interviews for applications that reached interview-friendly stages."""
     interviews = []
     interview_id = 1
+    profile = profile or {}
+    interview_status_weights = profile.get("interview_status_weights", [15, 75, 10])
+    partial_interview_boost = profile.get("partial_interview_boost", 0.0)
     for app in applications:
         app_id = app["application_id"]
         if app_id not in final_stage_per_app:
@@ -165,11 +175,11 @@ def generate_interviews(applications, final_stage_per_app):
             continue
 
         if stage_name in ["Screening", "Recruiter Screen"]:
-            num_interviews = 1
+            num_interviews = 1 + (1 if random.random() < partial_interview_boost else 0)
         elif stage_name in ["Hiring Manager Review", "Technical Interview"]:
-            num_interviews = random.randint(1, 2)
+            num_interviews = random.randint(1, 2 + (1 if random.random() < partial_interview_boost else 0))
         elif stage_name in ["Final Interview", "Offer", "Offer Accepted", "Joined"]:
-            num_interviews = random.randint(2, MAX_INTERVIEWS_PER_APPLICATION)
+            num_interviews = random.randint(2, MAX_INTERVIEWS_PER_APPLICATION + (1 if random.random() < partial_interview_boost else 0))
         else:
             num_interviews = 0
 
@@ -185,7 +195,7 @@ def generate_interviews(applications, final_stage_per_app):
 
             status = random.choices(
                 ["Scheduled", "Completed", "Cancelled"],
-                weights=[15, 75, 10],
+                weights=interview_status_weights,
                 k=1,
             )[0]
             completed = scheduled + timedelta(hours=random.randint(1, 8)) if status != "Scheduled" else None
@@ -211,10 +221,12 @@ def generate_interviews(applications, final_stage_per_app):
             interview_id += 1
     return interviews
 
-def generate_offers(applications, final_stage_per_app):
+def generate_offers(applications, final_stage_per_app, profile=None):
     """Generates offers only for applications that reached the 'Offer' stage and passed."""
     offers = []
     offer_id = 1
+    profile = profile or {}
+    offer_status_weights = profile.get("offer_status_weights", [45, 30, 20, 5])
     for app in applications:
         app_id = app["application_id"]
         if app_id in final_stage_per_app:
@@ -223,7 +235,7 @@ def generate_offers(applications, final_stage_per_app):
                 offer_date = stage["final_exited_at"] - timedelta(days=random.randint(1, 5))
                 offer_status = random.choices(
                     OFFER_STATUSES,
-                    weights=[45, 30, 20, 5],
+                    weights=offer_status_weights,
                     k=1,
                 )[0]
                 offers.append({
@@ -242,10 +254,13 @@ def generate_offers(applications, final_stage_per_app):
                 offer_id += 1
     return offers
 
-def generate_onboarding(offers):
+def generate_onboarding(offers, profile=None):
     """Generates onboarding records only for offers that were accepted."""
     onboarding = []
     onboarding_id = 1
+    profile = profile or {}
+    joining_status_weights = profile.get("joining_status_weights", [55, 15, 15, 15])
+    onboarding_completed_weights = profile.get("onboarding_completed_weights", [65, 35])
     for offer in offers:
         if offer["offer_status"] == "Accepted":
             planned = datetime.strptime(offer["joining_date"], "%Y-%m-%d")
@@ -257,9 +272,9 @@ def generate_onboarding(offers):
                 "candidate_id": offer["candidate_id"],
                 "planned_joining_date": planned.date().isoformat(),
                 "actual_joining_date": actual.date().isoformat() if random.random() > 0.2 else None,
-                "joining_status": random.choices(JOINING_STATUSES, weights=[55, 15, 15, 15], k=1)[0],
+                "joining_status": random.choices(JOINING_STATUSES, weights=joining_status_weights, k=1)[0],
                 "no_join_reason": random.choice(["Found other offer", "Personal reasons", None, None]) if random.random() > 0.6 else None,
-                "onboarding_completed": random.choices([True, False], weights=[65, 35], k=1)[0]
+                "onboarding_completed": random.choices([True, False], weights=onboarding_completed_weights, k=1)[0]
             })
             onboarding_id += 1
     return onboarding

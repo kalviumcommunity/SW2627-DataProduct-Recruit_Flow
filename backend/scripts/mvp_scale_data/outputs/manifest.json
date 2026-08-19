@@ -1,0 +1,70 @@
+{
+  "run_id": "review-clean4",
+  "clean": {
+    "directory": "outputs\\clean",
+    "namespace": "review-clean4-clean",
+    "summary": {
+      "candidates": 5000,
+      "jobs": 250,
+      "applications": 25000,
+      "stage_events": 100654,
+      "interviews": 42389,
+      "offers": 1674,
+      "onboarding": 596,
+      "applications_reaching_offer": 2830,
+      "applications_reaching_joined": 211
+    }
+  },
+  "messy": {
+    "directory": "outputs\\messy",
+    "namespace": "review-clean4-messy",
+    "expected_results": {
+      "total_applications": 25000,
+      "total_candidates": 5001,
+      "total_interviews": 42389,
+      "total_offers": 1674,
+      "total_onboarding": 596,
+      "expected_dropoff_stage": "Applied",
+      "top_department": "Engineering",
+      "duplicate_candidates": 1,
+      "stage_counts": {
+        "Applied": 21352,
+        "Screening": 19165,
+        "Recruiter Screen": 16170,
+        "Hiring Manager Review": 12419,
+        "Technical Interview": 7353,
+        "Final Interview": 4437,
+        " Applied ": 1831,
+        " Recruiter Screen ": 1431,
+        "hiring manager review": 1035,
+        "technical interview": 757,
+        "Offer": 2388,
+        "Offer Accepted": 959,
+        " Screening ": 1693,
+        "recruiter screen": 1408,
+        " Final Interview ": 403,
+        "applied": 1817,
+        "Tech Interview": 745,
+        "offer accepted": 91,
+        "screening": 1708,
+        " Technical Interview ": 706,
+        " Hiring Manager Review ": 1160,
+        "final interview": 405,
+        " Joined ": 17,
+        " Offer Accepted ": 93,
+        "HR Round": 393,
+        "Joined": 256,
+        " Offer ": 230,
+        "offer": 212,
+        "joined": 20
+      },
+      "supported_entities": {
+        "interviews": 42389,
+        "offers": 1674,
+        "onboarding": 596
+      },
+      "applications_reaching_offer": 2830,
+      "applications_reaching_joined": 211
+    }
+  }
+}
