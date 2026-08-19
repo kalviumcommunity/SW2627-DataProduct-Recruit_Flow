@@ -63,12 +63,23 @@ def duplicate_identity(val):
     """Adds a prefix to candidate_id to simulate a different source system"""
     return f"SRC2-{val}" if val else val
 
+def weird_status(val):
+    choices = [val, lower_case(val), upper_case(val), "Done", "Rejected", "Offer accepted", "No hire", "Joined"]
+    return random.choice(choices)
+
+def messy_score(val):
+    choices = [val, "N/A", "foo", "NaN", "  ", None, f" {val} " if val is not None else None]
+    return random.choice(choices)
+
+def currency_noise(val):
+    choices = [val, val.lower() if isinstance(val, str) else val, f" ${val} " if val is not None else None, "usd", "US Dollars"]
+    return random.choice(choices)
+
 # --- Chaos Configurations per Entity ---
 CANDIDATE_CHAOS = {
     "email": [nullify, lambda x: x.upper() if x else None, add_spaces],
     "first_name": [add_spaces, lower_case],
     "last_name": [add_spaces, lower_case],
-    "candidate_id": [duplicate_identity]  # Simulate two IDs for same person
 }
 
 JOB_CHAOS = {
@@ -91,20 +102,34 @@ STAGE_EVENT_CHAOS = {
 }
 
 INTERVIEW_CHAOS = {
+    "interview_type": [add_spaces, lower_case, lambda x: "HR Round", lambda x: "Final Panel"],
     "scheduled_at": [swap_date_format],
     "completed_at": [swap_date_format, nullify],
-    "technical_score": [lambda x: "N/A" if random.random() > 0.5 else x]  # String instead of int
+    "interview_status": [weird_status],
+    "technical_score": [messy_score],
+    "communication_score": [messy_score],
+    "overall_score": [messy_score],
+    "recommendation": [lambda x: random.choice(["Strong Hire", "Hire", "Leaning No", "No Hire", "Maybe", ""]), lower_case],
+    "feedback": [add_spaces, nullify]
 }
 
 OFFER_CHAOS = {
     "offer_date": [swap_date_format],
     "joining_date": [swap_date_format, nullify],
-    "offered_salary": [lambda x: f"${x}" if random.random() > 0.5 else x]  # String with $
+    "offer_status": [weird_status],
+    "offered_role": [add_spaces, lower_case],
+    "offered_salary": [lambda x: f"${x}" if random.random() > 0.5 else x, lambda x: f"{x:,}" if isinstance(x, int) else x],
+    "currency": [currency_noise],
+    "response_date": [swap_date_format, nullify],
+    "offer_rejection_reason": [add_spaces, nullify, lambda x: "Competing Offer"]
 }
 
 ONBOARDING_CHAOS = {
     "planned_joining_date": [swap_date_format],
-    "actual_joining_date": [swap_date_format, nullify]
+    "actual_joining_date": [swap_date_format, nullify],
+    "joining_status": [weird_status],
+    "no_join_reason": [add_spaces, nullify, lambda x: "Found other offer"],
+    "onboarding_completed": [lambda x: "YES" if random.random() > 0.5 else "No", lambda x: "true" if random.random() > 0.5 else "false"]
 }
 
 def write_csv(filename, headers, rows):
@@ -154,15 +179,28 @@ if __name__ == "__main__":
     write_csv("messy_onboarding.csv", ["onboarding_id", "offer_id", "application_id", "candidate_id", "planned_joining_date", "actual_joining_date", "joining_status", "no_join_reason", "onboarding_completed"], onboarding)
     
     # Step 5: Generate the "Expected Results" JSON (The Truth Serum)
+    stage_counts = {}
+    for row in stage_events:
+        stage_counts[row["stage_name"]] = stage_counts.get(row["stage_name"], 0) + 1
+
     expected = {
         "total_applications": len(applications),
         "total_candidates": len(set([c["candidate_id"] for c in candidates])),
-        "expected_dropoff_stage": "Technical Interview",  # We know from clean logic
+        "total_interviews": len(interviews),
+        "total_offers": len(offers),
+        "total_onboarding": len(onboarding),
+        "expected_dropoff_stage": max(stage_counts, key=stage_counts.get),  # The densest stage acts as our likely bottleneck
         "top_department": "Engineering",
-        "duplicate_candidates": 1  # We injected one duplicate
+        "duplicate_candidates": 1,  # We injected one duplicate
+        "stage_counts": stage_counts,
+        "supported_entities": {
+            "interviews": len(interviews),
+            "offers": len(offers),
+            "onboarding": len(onboarding),
+        }
     }
     
-    with open("expected_results.json", "w") as f:
+    with open(os.path.join(os.path.dirname(__file__), "expected_results.json"), "w", encoding="utf-8") as f:
         json.dump(expected, f, indent=2)
     
     print("🎉 Messy dataset and expected_results.json generated!")
