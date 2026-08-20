@@ -1,3 +1,4 @@
+
 # ignore dependencies and build artifacts
 /frontend/node_modules
 /frontend/.next
@@ -14,3 +15,24 @@ __pycache__/
 backend/uploads/
 *.log
 .DS_Store
+=======
+# Python virtual environment
+backend/.venv/
+.venv/
+
+# Environment variables containing local passwords and secrets
+backend/.env
+.env
+
+# Python cache files
+__pycache__/
+*.pyc
+backend/app/__pycache__/
+
+# Antigravity agent system-generated logs
+.system_generated/
+task_log/
+*.log
+
+node_modules/
+

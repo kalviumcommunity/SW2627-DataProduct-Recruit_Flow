@@ -1,6 +1,7 @@
 {
   "total_applications": 80,
   "total_candidates": 51,
+
   "total_interviews": 128,
   "total_offers": 10,
   "total_onboarding": 1,
@@ -37,4 +38,9 @@
     "offers": 10,
     "onboarding": 1
   }
+
+  "expected_dropoff_stage": "Technical Interview",
+  "top_department": "Engineering",
+  "duplicate_candidates": 1
+
 }
