@@ -8,6 +8,47 @@ import { useRouter } from 'next/navigation';
 export default function SignupPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    companyName: '',
+    password: ''
+  });
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:8000/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          full_name: formData.fullName,
+          password: formData.password
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || 'Signup failed');
+      }
+
+      // Success, redirect to login
+      router.push('/login');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#121212] flex">
@@ -68,12 +109,25 @@ export default function SignupPage() {
             <p className="text-[13px] text-[#A1A1AA]">Set up your workspace and invite your team.</p>
           </div>
 
-          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); router.push('/login'); }}>
+          {error && (
+            <div className="mb-4 p-3 rounded-md bg-red-900/50 border border-red-500 text-red-200 text-xs">
+              {error}
+            </div>
+          )}
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label className="block text-[13px] font-medium text-[#D4D4D8] mb-2">Full Name</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71717A]" />
-                <input type="text" placeholder="Jane Doe" className="w-full pl-9 pr-4 py-2.5 rounded-md border border-[#27272A] bg-[#09090B] text-[13px] text-white placeholder-[#71717A] focus:outline-none focus:border-[#3F3F46]" />
+                <input 
+                  type="text" 
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                  placeholder="Jane Doe" 
+                  className="w-full pl-9 pr-4 py-2.5 rounded-md border border-[#27272A] bg-[#09090B] text-[13px] text-white placeholder-[#71717A] focus:outline-none focus:border-[#3F3F46]" 
+                  required
+                />
               </div>
             </div>
 
@@ -81,7 +135,14 @@ export default function SignupPage() {
               <label className="block text-[13px] font-medium text-[#D4D4D8] mb-2">Work Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71717A]" />
-                <input type="email" placeholder="jane@company.com" className="w-full pl-9 pr-4 py-2.5 rounded-md border border-[#27272A] bg-[#09090B] text-[13px] text-white placeholder-[#71717A] focus:outline-none focus:border-[#3F3F46]" />
+                <input 
+                  type="email" 
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  placeholder="jane@company.com" 
+                  className="w-full pl-9 pr-4 py-2.5 rounded-md border border-[#27272A] bg-[#09090B] text-[13px] text-white placeholder-[#71717A] focus:outline-none focus:border-[#3F3F46]" 
+                  required
+                />
               </div>
             </div>
 
@@ -89,7 +150,13 @@ export default function SignupPage() {
               <label className="block text-[13px] font-medium text-[#D4D4D8] mb-2">Company Name</label>
               <div className="relative">
                 <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71717A]" />
-                <input type="text" placeholder="Acme Corp" className="w-full pl-9 pr-4 py-2.5 rounded-md border border-[#27272A] bg-[#09090B] text-[13px] text-white placeholder-[#71717A] focus:outline-none focus:border-[#3F3F46]" />
+                <input 
+                  type="text" 
+                  value={formData.companyName}
+                  onChange={(e) => setFormData({...formData, companyName: e.target.value})}
+                  placeholder="Acme Corp" 
+                  className="w-full pl-9 pr-4 py-2.5 rounded-md border border-[#27272A] bg-[#09090B] text-[13px] text-white placeholder-[#71717A] focus:outline-none focus:border-[#3F3F46]" 
+                />
               </div>
             </div>
 
@@ -97,7 +164,15 @@ export default function SignupPage() {
               <label className="block text-[13px] font-medium text-[#D4D4D8] mb-2">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71717A]" />
-                <input type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="w-full pl-9 pr-10 py-2.5 rounded-md border border-[#27272A] bg-[#09090B] text-[13px] text-white placeholder-[#71717A] focus:outline-none focus:border-[#3F3F46]" />
+                <input 
+                  type={showPassword ? 'text' : 'password'} 
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  placeholder="••••••••" 
+                  className="w-full pl-9 pr-10 py-2.5 rounded-md border border-[#27272A] bg-[#09090B] text-[13px] text-white placeholder-[#71717A] focus:outline-none focus:border-[#3F3F46]" 
+                  required
+                  minLength={8}
+                />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#71717A]">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -105,15 +180,15 @@ export default function SignupPage() {
             </div>
 
             <div className="flex items-start gap-2.5 pt-2">
-              <input type="checkbox" className="w-3.5 h-3.5 mt-0.5 rounded-sm border-[#3F3F46] bg-[#09090B] accent-[#1E293B]" />
+              <input type="checkbox" required className="w-3.5 h-3.5 mt-0.5 rounded-sm border-[#3F3F46] bg-[#09090B] accent-[#1E293B]" />
               <label className="text-[12px] text-[#A1A1AA] leading-tight">
                 I agree to the <span className="text-[#D4D4D8] underline decoration-[#71717A] underline-offset-2">Terms of Service</span> and <span className="text-[#D4D4D8] underline decoration-[#71717A] underline-offset-2">Privacy Policy</span>.
               </label>
             </div>
 
-            <button type="submit" className="w-full flex items-center justify-center gap-2 py-2.5 mt-2 rounded-md bg-[#1E293B] hover:bg-[#334155] text-white text-[13px] font-semibold transition-colors">
-              Create Account
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+            <button disabled={isLoading} type="submit" className="w-full flex items-center justify-center gap-2 py-2.5 mt-2 rounded-md bg-[#1E293B] hover:bg-[#334155] text-white text-[13px] font-semibold transition-colors disabled:opacity-50">
+              {isLoading ? 'Creating Account...' : 'Create Account'}
+              {!isLoading && <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>}
             </button>
           </form>
 
