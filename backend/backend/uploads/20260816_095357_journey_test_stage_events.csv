@@ -1,3 +1,0 @@
-stage_event_id,application_id,stage_name,entered_at,exited_at,stage_outcome,dropoff_flag,dropoff_reason
-JT-EVT-001,JT-APP-001,Screening,2026-08-02T09:00:00,2026-08-03T09:00:00,Passed,False,
-JT-EVT-002,JT-APP-001,Technical Interview,2026-08-04T09:00:00,2026-08-05T09:00:00,Passed,False,
