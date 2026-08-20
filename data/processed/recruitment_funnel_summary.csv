@@ -1,0 +1,6 @@
+stage_order,stage,candidate_count,overall_conversion_pct,next_stage,next_stage_count,stage_conversion_pct,stage_dropoff_pct,candidates_dropped_at_stage,avg_duration_days
+1,Application,10,100.0,Screening,10.0,100.0,0.0,0,1.1
+2,Screening,10,100.0,Interview,10.0,100.0,0.0,0,3.0
+3,Interview,10,100.0,Offer,6.0,60.0,40.0,4,2.7
+4,Offer,6,60.0,Joined,5.0,83.3,16.7,1,2.6
+5,Joined,5,50.0,,,,,0,3.8

@@ -1,0 +1,763 @@
+[
+  {
+    "candidate_id": "C1001",
+    "department": "IT",
+    "role": "Backend Developer",
+    "application_date": "2026-01-05",
+    "source": "LinkedIn",
+    "experience_years": 2,
+    "location": "Delhi",
+    "furthest_stage_reached": "Interview",
+    "final_outcome": "Dropped at Interview",
+    "total_pipeline_days": 9,
+    "timeline": [
+      {
+        "stage": "Application",
+        "raw_stage_name": "Application",
+        "entry_date": "2026-01-05",
+        "exit_date": "2026-01-06",
+        "duration_days": 1,
+        "status": "Completed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Screening",
+        "raw_stage_name": "Screening",
+        "entry_date": "2026-01-06",
+        "exit_date": "2026-01-09",
+        "duration_days": 3,
+        "status": "Passed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Interview",
+        "raw_stage_name": "Technical Interview",
+        "entry_date": "2026-01-09",
+        "exit_date": "2026-01-14",
+        "duration_days": 5,
+        "status": "Rejected",
+        "rejection_reason": "Technical Mismatch",
+        "interviews": [
+          {
+            "interview_id": "I001",
+            "candidate_id": "C1001",
+            "stage": "Interview",
+            "interview_date": "2026-01-12",
+            "interviewer": "Rohit Sharma",
+            "technical_score": 3,
+            "communication_score": 6,
+            "overall_score": 4.5,
+            "recommendation": "Reject",
+            "feedback": "Weak in system design fundamentals"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "candidate_id": "C1002",
+    "department": "IT",
+    "role": "Frontend Developer",
+    "application_date": "2026-01-07",
+    "source": "Referral",
+    "experience_years": 3,
+    "location": "Bangalore",
+    "furthest_stage_reached": "Joined",
+    "final_outcome": "Hired & Joined",
+    "total_pipeline_days": 13,
+    "timeline": [
+      {
+        "stage": "Application",
+        "raw_stage_name": "Application",
+        "entry_date": "2026-01-07",
+        "exit_date": "2026-01-08",
+        "duration_days": 1,
+        "status": "Completed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Screening",
+        "raw_stage_name": "Screening",
+        "entry_date": "2026-01-08",
+        "exit_date": "2026-01-11",
+        "duration_days": 3,
+        "status": "Passed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Interview",
+        "raw_stage_name": "Technical Interview",
+        "entry_date": "2026-01-11",
+        "exit_date": "2026-01-15",
+        "duration_days": 4,
+        "status": "Passed",
+        "rejection_reason": null,
+        "interviews": [
+          {
+            "interview_id": "I002",
+            "candidate_id": "C1002",
+            "stage": "Interview",
+            "interview_date": "2026-01-14",
+            "interviewer": "Anita Desai",
+            "technical_score": 8,
+            "communication_score": 8,
+            "overall_score": 8.0,
+            "recommendation": "Proceed",
+            "feedback": "Strong technical fundamentals"
+          }
+        ]
+      },
+      {
+        "stage": "Interview",
+        "raw_stage_name": "HR Interview",
+        "entry_date": "2026-01-15",
+        "exit_date": "2026-01-18",
+        "duration_days": 3,
+        "status": "Passed",
+        "rejection_reason": null,
+        "interviews": [
+          {
+            "interview_id": "I002",
+            "candidate_id": "C1002",
+            "stage": "Interview",
+            "interview_date": "2026-01-14",
+            "interviewer": "Anita Desai",
+            "technical_score": 8,
+            "communication_score": 8,
+            "overall_score": 8.0,
+            "recommendation": "Proceed",
+            "feedback": "Strong technical fundamentals"
+          }
+        ]
+      },
+      {
+        "stage": "Offer",
+        "raw_stage_name": "Offer",
+        "entry_date": "2026-01-18",
+        "exit_date": "2026-01-20",
+        "duration_days": 2,
+        "status": "Accepted",
+        "rejection_reason": null,
+        "onboarding_details": {
+          "offer_date": "2026-01-18",
+          "offer_status": "Accepted",
+          "joining_status": "Joined",
+          "actual_joining_date": "2026-02-01"
+        }
+      },
+      {
+        "stage": "Joined",
+        "raw_stage_name": "Joining",
+        "entry_date": "2026-01-20",
+        "exit_date": "2026-01-20",
+        "duration_days": 0,
+        "status": "Completed",
+        "rejection_reason": null,
+        "onboarding_details": {
+          "offer_date": "2026-01-18",
+          "offer_status": "Accepted",
+          "joining_status": "Joined",
+          "actual_joining_date": "2026-02-01"
+        }
+      }
+    ]
+  },
+  {
+    "candidate_id": "C1003",
+    "department": "Finance",
+    "role": "Financial Analyst",
+    "application_date": "2026-01-08",
+    "source": "Indeed",
+    "experience_years": 1,
+    "location": "Mumbai",
+    "furthest_stage_reached": "Joined",
+    "final_outcome": "Dropped at Joined",
+    "total_pipeline_days": 12,
+    "timeline": [
+      {
+        "stage": "Application",
+        "raw_stage_name": "Application",
+        "entry_date": "2026-01-08",
+        "exit_date": "2026-01-10",
+        "duration_days": 2,
+        "status": "Completed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Screening",
+        "raw_stage_name": "Screening",
+        "entry_date": "2026-01-10",
+        "exit_date": "2026-01-13",
+        "duration_days": 3,
+        "status": "Passed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Interview",
+        "raw_stage_name": "Interview",
+        "entry_date": "2026-01-13",
+        "exit_date": "2026-01-15",
+        "duration_days": 2,
+        "status": "Passed",
+        "rejection_reason": null,
+        "interviews": [
+          {
+            "interview_id": "I003",
+            "candidate_id": "C1003",
+            "stage": "Finance",
+            "interview_date": "2026-01-15",
+            "interviewer": "Karan Mehta",
+            "technical_score": 7,
+            "communication_score": 7,
+            "overall_score": 7.0,
+            "recommendation": "Proceed",
+            "feedback": "Good understanding of financial modeling"
+          }
+        ]
+      },
+      {
+        "stage": "Offer",
+        "raw_stage_name": "Offer",
+        "entry_date": "2026-01-15",
+        "exit_date": "2026-01-20",
+        "duration_days": 5,
+        "status": "Accepted",
+        "rejection_reason": null,
+        "onboarding_details": {
+          "offer_date": "2026-01-20",
+          "offer_status": "Accepted",
+          "joining_status": "No-show",
+          "actual_joining_date": null
+        }
+      },
+      {
+        "stage": "Joined",
+        "raw_stage_name": "Joining",
+        "entry_date": "2026-01-20",
+        "exit_date": null,
+        "duration_days": 0,
+        "status": "No-show",
+        "rejection_reason": "No Show",
+        "onboarding_details": {
+          "offer_date": "2026-01-20",
+          "offer_status": "Accepted",
+          "joining_status": "No-show",
+          "actual_joining_date": null
+        }
+      }
+    ]
+  },
+  {
+    "candidate_id": "C1004",
+    "department": "IT",
+    "role": "Data Engineer",
+    "application_date": "2026-01-10",
+    "source": "LinkedIn",
+    "experience_years": 4,
+    "location": "Pune",
+    "furthest_stage_reached": "Interview",
+    "final_outcome": "Dropped at Interview",
+    "total_pipeline_days": 7,
+    "timeline": [
+      {
+        "stage": "Application",
+        "raw_stage_name": "Application",
+        "entry_date": "2026-01-10",
+        "exit_date": "2026-01-11",
+        "duration_days": 1,
+        "status": "Completed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Screening",
+        "raw_stage_name": "Screening",
+        "entry_date": "2026-01-11",
+        "exit_date": "2026-01-14",
+        "duration_days": 3,
+        "status": "Passed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Interview",
+        "raw_stage_name": "Technical Interview",
+        "entry_date": "2026-01-14",
+        "exit_date": "2026-01-17",
+        "duration_days": 3,
+        "status": "Rejected",
+        "rejection_reason": "Technical Mismatch",
+        "interviews": [
+          {
+            "interview_id": "I004",
+            "candidate_id": "C1004",
+            "stage": "Interview",
+            "interview_date": "2026-01-17",
+            "interviewer": "Rohit Sharma",
+            "technical_score": 4,
+            "communication_score": 7,
+            "overall_score": 5.5,
+            "recommendation": "Reject",
+            "feedback": "Insufficient data pipeline knowledge"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "candidate_id": "C1005",
+    "department": "HR",
+    "role": "HR Executive",
+    "application_date": "2026-01-11",
+    "source": "Referral",
+    "experience_years": 2,
+    "location": "Delhi",
+    "furthest_stage_reached": "Joined",
+    "final_outcome": "Hired & Joined",
+    "total_pipeline_days": 30,
+    "timeline": [
+      {
+        "stage": "Application",
+        "raw_stage_name": "Application",
+        "entry_date": "2026-01-11",
+        "exit_date": "2026-01-12",
+        "duration_days": 1,
+        "status": "Completed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Screening",
+        "raw_stage_name": "Screening",
+        "entry_date": "2026-01-12",
+        "exit_date": "2026-01-15",
+        "duration_days": 3,
+        "status": "Passed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Interview",
+        "raw_stage_name": "HR Interview",
+        "entry_date": "2026-01-15",
+        "exit_date": "2026-01-18",
+        "duration_days": 3,
+        "status": "Passed",
+        "rejection_reason": null,
+        "interviews": [
+          {
+            "interview_id": "I005",
+            "candidate_id": "C1005",
+            "stage": "Hr",
+            "interview_date": "2026-01-18",
+            "interviewer": "Priya Nair",
+            "technical_score": 8,
+            "communication_score": 9,
+            "overall_score": 8.5,
+            "recommendation": "Proceed",
+            "feedback": "Excellent communication and culture fit"
+          }
+        ]
+      },
+      {
+        "stage": "Offer",
+        "raw_stage_name": "Offer",
+        "entry_date": "2026-01-18",
+        "exit_date": "2026-01-22",
+        "duration_days": 4,
+        "status": "Accepted",
+        "rejection_reason": null,
+        "onboarding_details": {
+          "offer_date": "2026-01-22",
+          "offer_status": "Accepted",
+          "joining_status": "Joined",
+          "actual_joining_date": "2026-02-10"
+        }
+      },
+      {
+        "stage": "Joined",
+        "raw_stage_name": "Joining",
+        "entry_date": "2026-01-22",
+        "exit_date": "2026-02-10",
+        "duration_days": 19,
+        "status": "Completed",
+        "rejection_reason": null,
+        "onboarding_details": {
+          "offer_date": "2026-01-22",
+          "offer_status": "Accepted",
+          "joining_status": "Joined",
+          "actual_joining_date": "2026-02-10"
+        }
+      }
+    ]
+  },
+  {
+    "candidate_id": "C1006",
+    "department": "Sales",
+    "role": "Sales Executive",
+    "application_date": "2026-01-12",
+    "source": "Company Website",
+    "experience_years": 1,
+    "location": "Chandigarh",
+    "furthest_stage_reached": "Offer",
+    "final_outcome": "Dropped at Offer",
+    "total_pipeline_days": 13,
+    "timeline": [
+      {
+        "stage": "Application",
+        "raw_stage_name": "Application",
+        "entry_date": "2026-01-12",
+        "exit_date": "2026-01-13",
+        "duration_days": 1,
+        "status": "Completed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Screening",
+        "raw_stage_name": "Screening",
+        "entry_date": "2026-01-13",
+        "exit_date": "2026-01-16",
+        "duration_days": 3,
+        "status": "Passed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Interview",
+        "raw_stage_name": "Sales Interview",
+        "entry_date": "2026-01-16",
+        "exit_date": "2026-01-19",
+        "duration_days": 3,
+        "status": "Passed",
+        "rejection_reason": null,
+        "interviews": [
+          {
+            "interview_id": "I006",
+            "candidate_id": "C1006",
+            "stage": "Sales",
+            "interview_date": "2026-01-19",
+            "interviewer": "Vikram Singh",
+            "technical_score": 6,
+            "communication_score": 8,
+            "overall_score": 7.0,
+            "recommendation": "Proceed",
+            "feedback": "Good communication skills"
+          }
+        ]
+      },
+      {
+        "stage": "Offer",
+        "raw_stage_name": "Offer",
+        "entry_date": "2026-01-19",
+        "exit_date": "2026-01-25",
+        "duration_days": 6,
+        "status": "Rejected",
+        "rejection_reason": "Offer Declined - Better Opportunity",
+        "onboarding_details": {
+          "offer_date": "2026-01-25",
+          "offer_status": "Rejected",
+          "joining_status": null,
+          "actual_joining_date": null
+        }
+      }
+    ]
+  },
+  {
+    "candidate_id": "C1007",
+    "department": "IT",
+    "role": "Backend Developer",
+    "application_date": "2026-01-14",
+    "source": "LinkedIn",
+    "experience_years": 5,
+    "location": "Hyderabad",
+    "furthest_stage_reached": "Joined",
+    "final_outcome": "Hired & Joined",
+    "total_pipeline_days": 32,
+    "timeline": [
+      {
+        "stage": "Application",
+        "raw_stage_name": "Application",
+        "entry_date": "2026-01-14",
+        "exit_date": "2026-01-15",
+        "duration_days": 1,
+        "status": "Completed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Screening",
+        "raw_stage_name": "Screening",
+        "entry_date": "2026-01-15",
+        "exit_date": "2026-01-18",
+        "duration_days": 3,
+        "status": "Passed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Interview",
+        "raw_stage_name": "Technical Interview",
+        "entry_date": "2026-01-18",
+        "exit_date": "2026-01-20",
+        "duration_days": 2,
+        "status": "Passed",
+        "rejection_reason": null,
+        "interviews": [
+          {
+            "interview_id": "I007",
+            "candidate_id": "C1007",
+            "stage": "Interview",
+            "interview_date": "2026-01-20",
+            "interviewer": "Anita Desai",
+            "technical_score": 9,
+            "communication_score": 8,
+            "overall_score": 8.5,
+            "recommendation": "Proceed",
+            "feedback": "Excellent problem solving skills"
+          }
+        ]
+      },
+      {
+        "stage": "Interview",
+        "raw_stage_name": "HR Interview",
+        "entry_date": "2026-01-20",
+        "exit_date": "2026-01-24",
+        "duration_days": 4,
+        "status": "Passed",
+        "rejection_reason": null,
+        "interviews": [
+          {
+            "interview_id": "I007",
+            "candidate_id": "C1007",
+            "stage": "Interview",
+            "interview_date": "2026-01-20",
+            "interviewer": "Anita Desai",
+            "technical_score": 9,
+            "communication_score": 8,
+            "overall_score": 8.5,
+            "recommendation": "Proceed",
+            "feedback": "Excellent problem solving skills"
+          }
+        ]
+      },
+      {
+        "stage": "Offer",
+        "raw_stage_name": "Offer",
+        "entry_date": "2026-01-24",
+        "exit_date": "2026-01-27",
+        "duration_days": 3,
+        "status": "Accepted",
+        "rejection_reason": null,
+        "onboarding_details": {
+          "offer_date": "2026-01-27",
+          "offer_status": "Accepted",
+          "joining_status": "Joined",
+          "actual_joining_date": "2026-02-15"
+        }
+      },
+      {
+        "stage": "Joined",
+        "raw_stage_name": "Joining",
+        "entry_date": "2026-01-27",
+        "exit_date": "2026-02-15",
+        "duration_days": 19,
+        "status": "Completed",
+        "rejection_reason": null,
+        "onboarding_details": {
+          "offer_date": "2026-01-27",
+          "offer_status": "Accepted",
+          "joining_status": "Joined",
+          "actual_joining_date": "2026-02-15"
+        }
+      }
+    ]
+  },
+  {
+    "candidate_id": "C1008",
+    "department": "Finance",
+    "role": "Accountant",
+    "application_date": "2026-01-15",
+    "source": "Indeed",
+    "experience_years": 2,
+    "location": "Mumbai",
+    "furthest_stage_reached": "Interview",
+    "final_outcome": "Dropped at Interview",
+    "total_pipeline_days": 6,
+    "timeline": [
+      {
+        "stage": "Application",
+        "raw_stage_name": "Application",
+        "entry_date": "2026-01-15",
+        "exit_date": "2026-01-16",
+        "duration_days": 1,
+        "status": "Completed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Screening",
+        "raw_stage_name": "Screening",
+        "entry_date": "2026-01-16",
+        "exit_date": "2026-01-19",
+        "duration_days": 3,
+        "status": "Passed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Interview",
+        "raw_stage_name": "Finance Interview",
+        "entry_date": "2026-01-19",
+        "exit_date": "2026-01-21",
+        "duration_days": 2,
+        "status": "Withdrawn",
+        "rejection_reason": "Candidate Withdrew",
+        "interviews": [
+          {
+            "interview_id": "I008",
+            "candidate_id": "C1008",
+            "stage": "Finance",
+            "interview_date": "2026-01-21",
+            "interviewer": "Karan Mehta",
+            "technical_score": 6,
+            "communication_score": 6,
+            "overall_score": 6.0,
+            "recommendation": "Hold",
+            "feedback": "Salary expectations too high"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "candidate_id": "C1009",
+    "department": "IT",
+    "role": "QA Engineer",
+    "application_date": "2026-01-17",
+    "source": "Referral",
+    "experience_years": 2,
+    "location": "Bangalore",
+    "furthest_stage_reached": "Interview",
+    "final_outcome": "Dropped at Interview",
+    "total_pipeline_days": 5,
+    "timeline": [
+      {
+        "stage": "Application",
+        "raw_stage_name": "Application",
+        "entry_date": "2026-01-17",
+        "exit_date": "2026-01-18",
+        "duration_days": 1,
+        "status": "Completed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Screening",
+        "raw_stage_name": "Screening",
+        "entry_date": "2026-01-18",
+        "exit_date": "2026-01-21",
+        "duration_days": 3,
+        "status": "Passed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Interview",
+        "raw_stage_name": "Technical Interview",
+        "entry_date": "2026-01-21",
+        "exit_date": "2026-01-22",
+        "duration_days": 1,
+        "status": "Rejected",
+        "rejection_reason": "Technical Mismatch",
+        "interviews": [
+          {
+            "interview_id": "I009",
+            "candidate_id": "C1009",
+            "stage": "Interview",
+            "interview_date": "2026-01-22",
+            "interviewer": "Rohit Sharma",
+            "technical_score": 5,
+            "communication_score": 7,
+            "overall_score": 6.0,
+            "recommendation": "Reject",
+            "feedback": "Insufficient Python knowledge"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "candidate_id": "C1010",
+    "department": "Sales",
+    "role": "Sales Manager",
+    "application_date": "2026-01-18",
+    "source": "LinkedIn",
+    "experience_years": 6,
+    "location": "Delhi",
+    "furthest_stage_reached": "Joined",
+    "final_outcome": "Dropped at Joined",
+    "total_pipeline_days": 11,
+    "timeline": [
+      {
+        "stage": "Application",
+        "raw_stage_name": "Application",
+        "entry_date": "2026-01-18",
+        "exit_date": "2026-01-19",
+        "duration_days": 1,
+        "status": "Completed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Screening",
+        "raw_stage_name": "Screening",
+        "entry_date": "2026-01-19",
+        "exit_date": "2026-01-22",
+        "duration_days": 3,
+        "status": "Passed",
+        "rejection_reason": null
+      },
+      {
+        "stage": "Interview",
+        "raw_stage_name": "Sales Interview",
+        "entry_date": "2026-01-22",
+        "exit_date": "2026-01-23",
+        "duration_days": 1,
+        "status": "Passed",
+        "rejection_reason": null,
+        "interviews": [
+          {
+            "interview_id": "I010",
+            "candidate_id": "C1010",
+            "stage": "Sales",
+            "interview_date": "2026-01-23",
+            "interviewer": "Vikram Singh",
+            "technical_score": 8,
+            "communication_score": 8,
+            "overall_score": 8.0,
+            "recommendation": "Proceed",
+            "feedback": "Strong leadership qualities"
+          }
+        ]
+      },
+      {
+        "stage": "Offer",
+        "raw_stage_name": "Offer",
+        "entry_date": "2026-01-23",
+        "exit_date": "2026-01-29",
+        "duration_days": 6,
+        "status": "Accepted",
+        "rejection_reason": null,
+        "onboarding_details": {
+          "offer_date": "2026-01-29",
+          "offer_status": "Accepted",
+          "joining_status": "No-show",
+          "actual_joining_date": null
+        }
+      },
+      {
+        "stage": "Joined",
+        "raw_stage_name": "Joining",
+        "entry_date": "2026-01-29",
+        "exit_date": null,
+        "duration_days": 0,
+        "status": "No-show",
+        "rejection_reason": "No Show",
+        "onboarding_details": {
+          "offer_date": "2026-01-29",
+          "offer_status": "Accepted",
+          "joining_status": "No-show",
+          "actual_joining_date": null
+        }
+      }
+    ]
+  }
+]

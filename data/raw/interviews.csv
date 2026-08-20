@@ -1,0 +1,11 @@
+interview_id,candidate_id,stage,interview_date,interviewer,technical_score,communication_score,overall_score,recommendation,feedback
+I001,C1001,Technical,2026-01-12,Rohit Sharma,3,6,4,Reject,Weak in system design fundamentals
+I002,C1002,Technical,2026-01-14,Anita Desai,8,8,8,Proceed,Strong technical fundamentals
+I003,C1003,Finance,2026-01-15,Karan Mehta,7,7,7,Proceed,Good understanding of financial modeling
+I004,C1004,Technical,2026-01-17,Rohit Sharma,4,7,5,Reject,Insufficient data pipeline knowledge
+I005,C1005,HR,2026-01-18,Priya Nair,8,9,8.5,Proceed,Excellent communication and culture fit
+I006,C1006,Sales,2026-01-19,Vikram Singh,6,8,7,Proceed,Good communication skills
+I007,C1007,Technical,2026-01-20,Anita Desai,9,8,8.5,Proceed,Excellent problem solving skills
+I008,C1008,Finance,2026-01-21,Karan Mehta,6,6,6,Hold,Salary expectations too high
+I009,C1009,Technical,2026-01-22,Rohit Sharma,5,7,6,Reject,Insufficient Python knowledge
+I010,C1010,Sales,2026-01-23,Vikram Singh,8,8,8,Proceed,Strong leadership qualities

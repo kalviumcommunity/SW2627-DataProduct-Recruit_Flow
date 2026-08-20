@@ -1,0 +1,44 @@
+candidate_id,stage,stage_entry_date,stage_exit_date,status,rejection_reason,next_stage
+C1001,Application,2026-01-05,2026-01-06,Completed,,Screening
+C1001,Screening,2026-01-06,2026-01-09,Passed,,Technical Interview
+C1001,Technical Interview,2026-01-09,2026-01-14,Rejected,Technical mismatch,
+C1002,Application,2026-01-07,2026-01-08,Completed,,Screening
+C1002,Screening,2026-01-08,2026-01-11,Passed,,Technical Interview
+C1002,Technical Interview,2026-01-11,2026-01-15,Passed,,HR Interview
+C1002,HR Interview,2026-01-15,2026-01-18,Passed,,Offer
+C1002,Offer,2026-01-18,2026-01-20,Accepted,,Joining
+C1002,Joining,2026-01-20,2026-01-20,Completed,,
+C1003,Application,2026-01-08,2026-01-10,Completed,,Screening
+C1003,Screening,2026-01-10,2026-01-13,Passed,,Interview
+C1003,Interview,2026-01-13,2026-01-15,Passed,,Offer
+C1003,Offer,2026-01-15,2026-01-20,Accepted,,Joining
+C1003,Joining,2026-01-20,,No-show,Did not join after accepting offer,
+C1004,Application,2026-01-10,2026-01-11,Completed,,Screening
+C1004,Screening,2026-01-11,2026-01-14,Passed,,Technical Interview
+C1004,Technical Interview,2026-01-14,2026-01-17,Rejected,Technical mismatch,
+C1005,Application,2026-01-11,2026-01-12,Completed,,Screening
+C1005,Screening,2026-01-12,2026-01-15,Passed,,HR Interview
+C1005,HR Interview,2026-01-15,2026-01-18,Passed,,Offer
+C1005,Offer,2026-01-18,2026-01-22,Accepted,,Joining
+C1005,Joining,2026-01-22,2026-02-10,Completed,,
+C1006,Application,2026-01-12,2026-01-13,Completed,,Screening
+C1006,Screening,2026-01-13,2026-01-16,Passed,,Sales Interview
+C1006,Sales Interview,2026-01-16,2026-01-19,Passed,,Offer
+C1006,Offer,2026-01-19,2026-01-25,Rejected,Declined offer - better opportunity elsewhere,
+C1007,Application,2026-01-14,2026-01-15,Completed,,Screening
+C1007,Screening,2026-01-15,2026-01-18,Passed,,Technical Interview
+C1007,Technical Interview,2026-01-18,2026-01-20,Passed,,HR Interview
+C1007,HR Interview,2026-01-20,2026-01-24,Passed,,Offer
+C1007,Offer,2026-01-24,2026-01-27,Accepted,,Joining
+C1007,Joining,2026-01-27,2026-02-15,Completed,,
+C1008,Application,2026-01-15,2026-01-16,Completed,,Screening
+C1008,Screening,2026-01-16,2026-01-19,Passed,,Finance Interview
+C1008,Finance Interview,2026-01-19,2026-01-21,Withdrawn,Application put on hold; candidate withdrew,
+C1009,Application,2026-01-17,2026-01-18,Completed,,Screening
+C1009,Screening,2026-01-18,2026-01-21,Passed,,Technical Interview
+C1009,Technical Interview,2026-01-21,2026-01-22,Rejected,Insufficient Python knowledge,
+C1010,Application,2026-01-18,2026-01-19,Completed,,Screening
+C1010,Screening,2026-01-19,2026-01-22,Passed,,Sales Interview
+C1010,Sales Interview,2026-01-22,2026-01-23,Passed,,Offer
+C1010,Offer,2026-01-23,2026-01-29,Accepted,,Joining
+C1010,Joining,2026-01-29,,No-show,Did not join after accepting offer,

@@ -1,0 +1,11 @@
+candidate_id,department,role,application_date,source,experience_years,location,furthest_stage_reached,furthest_stage_index,final_outcome,total_recruitment_duration_days,dropped,joined,offer_accepted,average_interview_score,rejection_reason,duration_application_days,duration_screening_days,duration_interview_days,duration_offer_days,duration_joined_days,is_delayed_dropoff
+C1001,IT,Backend Developer,2026-01-05,LinkedIn,2,Delhi,Interview,2,Dropped at Interview,9,1,0,0,4.5,Technical Mismatch,1,3,5,0,0,1
+C1002,IT,Frontend Developer,2026-01-07,Referral,3,Bangalore,Joined,4,Hired & Joined,13,0,1,1,8.0,,1,3,3,2,0,0
+C1003,Finance,Financial Analyst,2026-01-08,Indeed,1,Mumbai,Joined,4,Dropped at Joined,12,1,0,1,7.0,No Show,2,3,2,5,0,0
+C1004,IT,Data Engineer,2026-01-10,LinkedIn,4,Pune,Interview,2,Dropped at Interview,7,1,0,0,5.5,Technical Mismatch,1,3,3,0,0,0
+C1005,HR,HR Executive,2026-01-11,Referral,2,Delhi,Joined,4,Hired & Joined,30,0,1,1,8.5,,1,3,3,4,19,0
+C1006,Sales,Sales Executive,2026-01-12,Company Website,1,Chandigarh,Offer,3,Dropped at Offer,13,1,0,0,7.0,Offer Declined - Better Opportunity,1,3,3,6,0,0
+C1007,IT,Backend Developer,2026-01-14,LinkedIn,5,Hyderabad,Joined,4,Hired & Joined,32,0,1,1,8.5,,1,3,4,3,19,0
+C1008,Finance,Accountant,2026-01-15,Indeed,2,Mumbai,Interview,2,Dropped at Interview,6,1,0,0,6.0,Candidate Withdrew,1,3,2,0,0,0
+C1009,IT,QA Engineer,2026-01-17,Referral,2,Bangalore,Interview,2,Dropped at Interview,5,1,0,0,6.0,Technical Mismatch,1,3,1,0,0,0
+C1010,Sales,Sales Manager,2026-01-18,LinkedIn,6,Delhi,Joined,4,Dropped at Joined,11,1,0,1,8.0,No Show,1,3,1,6,0,0

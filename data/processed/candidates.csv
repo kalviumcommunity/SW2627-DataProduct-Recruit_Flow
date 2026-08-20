@@ -1,0 +1,11 @@
+candidate_id,department,role,application_date,source,experience_years,location
+C1001,IT,Backend Developer,2026-01-05,LinkedIn,2,Delhi
+C1002,IT,Frontend Developer,2026-01-07,Referral,3,Bangalore
+C1003,Finance,Financial Analyst,2026-01-08,Indeed,1,Mumbai
+C1004,IT,Data Engineer,2026-01-10,LinkedIn,4,Pune
+C1005,HR,HR Executive,2026-01-11,Referral,2,Delhi
+C1006,Sales,Sales Executive,2026-01-12,Company Website,1,Chandigarh
+C1007,IT,Backend Developer,2026-01-14,LinkedIn,5,Hyderabad
+C1008,Finance,Accountant,2026-01-15,Indeed,2,Mumbai
+C1009,IT,QA Engineer,2026-01-17,Referral,2,Bangalore
+C1010,Sales,Sales Manager,2026-01-18,LinkedIn,6,Delhi

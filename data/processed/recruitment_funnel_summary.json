@@ -1,0 +1,62 @@
+[
+  {
+    "stage_order": 1,
+    "stage": "Application",
+    "candidate_count": 10,
+    "overall_conversion_pct": 100.0,
+    "next_stage": "Screening",
+    "next_stage_count": 10.0,
+    "stage_conversion_pct": 100.0,
+    "stage_dropoff_pct": 0.0,
+    "candidates_dropped_at_stage": 0,
+    "avg_duration_days": 1.1
+  },
+  {
+    "stage_order": 2,
+    "stage": "Screening",
+    "candidate_count": 10,
+    "overall_conversion_pct": 100.0,
+    "next_stage": "Interview",
+    "next_stage_count": 10.0,
+    "stage_conversion_pct": 100.0,
+    "stage_dropoff_pct": 0.0,
+    "candidates_dropped_at_stage": 0,
+    "avg_duration_days": 3.0
+  },
+  {
+    "stage_order": 3,
+    "stage": "Interview",
+    "candidate_count": 10,
+    "overall_conversion_pct": 100.0,
+    "next_stage": "Offer",
+    "next_stage_count": 6.0,
+    "stage_conversion_pct": 60.0,
+    "stage_dropoff_pct": 40.0,
+    "candidates_dropped_at_stage": 4,
+    "avg_duration_days": 2.7
+  },
+  {
+    "stage_order": 4,
+    "stage": "Offer",
+    "candidate_count": 6,
+    "overall_conversion_pct": 60.0,
+    "next_stage": "Joined",
+    "next_stage_count": 5.0,
+    "stage_conversion_pct": 83.3,
+    "stage_dropoff_pct": 16.7,
+    "candidates_dropped_at_stage": 1,
+    "avg_duration_days": 2.6
+  },
+  {
+    "stage_order": 5,
+    "stage": "Joined",
+    "candidate_count": 5,
+    "overall_conversion_pct": 50.0,
+    "next_stage": null,
+    "next_stage_count": NaN,
+    "stage_conversion_pct": NaN,
+    "stage_dropoff_pct": NaN,
+    "candidates_dropped_at_stage": 0,
+    "avg_duration_days": 3.8
+  }
+]

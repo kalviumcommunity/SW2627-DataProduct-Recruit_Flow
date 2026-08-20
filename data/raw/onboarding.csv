@@ -1,0 +1,11 @@
+candidate_id,offer_date,offer_status,expected_joining_date,actual_joining_date,joining_status,onboarding_status
+C1001,,,,,,
+C1002,2026-01-18,Accepted,2026-02-01,2026-02-01,Joined,Completed
+C1003,2026-01-20,Accepted,2026-02-05,,No-show,Pending
+C1004,,,,,,
+C1005,2026-01-22,Accepted,2026-02-10,2026-02-10,Joined,Completed
+C1006,2026-01-25,Rejected,,,,
+C1007,2026-01-27,Accepted,2026-02-15,2026-02-15,Joined,Completed
+C1008,,,,,,
+C1009,,,,,,
+C1010,2026-01-29,Accepted,2026-02-20,,No-show,Pending
