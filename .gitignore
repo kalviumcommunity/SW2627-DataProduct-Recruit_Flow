@@ -1,3 +1,21 @@
+
+# ignore dependencies and build artifacts
+/frontend/node_modules
+/frontend/.next
+node_modules
+.DS_Store
+
+
+
+##backend - A
+venv/
+__pycache__/
+*.pyc
+.env
+backend/uploads/
+*.log
+.DS_Store
+=======
 # Python virtual environment
 backend/.venv/
 .venv/
@@ -17,3 +35,4 @@ task_log/
 *.log
 
 node_modules/
+

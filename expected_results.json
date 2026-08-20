@@ -1,7 +1,46 @@
 {
   "total_applications": 80,
   "total_candidates": 51,
+
+  "total_interviews": 128,
+  "total_offers": 10,
+  "total_onboarding": 1,
+  "expected_dropoff_stage": "Applied",
+  "top_department": "Engineering",
+  "duplicate_candidates": 1,
+  "stage_counts": {
+    " Applied ": 8,
+    "Screening": 57,
+    "Applied": 62,
+    "Recruiter Screen": 57,
+    "Hiring Manager Review": 44,
+    " Recruiter Screen ": 6,
+    "applied": 10,
+    "screening": 12,
+    " Hiring Manager Review ": 6,
+    " Technical Interview ": 5,
+    "Final Interview": 22,
+    "Offer": 12,
+    "Offer Accepted": 9,
+    "Technical Interview": 30,
+    "hiring manager review": 2,
+    "Tech Interview": 6,
+    "final interview": 1,
+    "recruiter screen": 5,
+    " Screening ": 7,
+    "offer": 1,
+    "HR Round": 1,
+    "technical interview": 1,
+    "Joined": 1
+  },
+  "supported_entities": {
+    "interviews": 128,
+    "offers": 10,
+    "onboarding": 1
+  }
+
   "expected_dropoff_stage": "Technical Interview",
   "top_department": "Engineering",
   "duplicate_candidates": 1
+
 }
