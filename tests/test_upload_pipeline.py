@@ -6,7 +6,7 @@ import pandas as pd
 # Add project root to sys.path
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from backend.routes.analytics import get_funnel
+from backend.routes.analytics import get_funnel, get_reasons, get_dropoff
 from backend.routes.candidates import get_candidate
 from backend.routes.upload import upload_entity_file, trigger_full_pipeline
 
@@ -34,5 +34,23 @@ class TestUploadPipeline(unittest.TestCase):
         self.assertEqual(res["status"], "success")
         print("\n [OK] Pipeline Trigger Route Verified: Successfully ran full Data Science engine!")
 
+    def test_04_reasons_and_dropoff_routes(self):
+        import asyncio
+        reasons_data = asyncio.run(get_reasons())
+        self.assertIsInstance(reasons_data, list)
+        self.assertGreater(len(reasons_data), 0)
+        print("\n [OK] Analytics Reasons Endpoint Route Verified:")
+        for r in reasons_data:
+            print(f"   - {r['reason']}: {r['count']} ({r['percentage']}%)")
+            
+        dropoff_data = asyncio.run(get_dropoff())
+        self.assertIsInstance(dropoff_data, dict)
+        self.assertIn("detailed_reasons", dropoff_data)
+        self.assertIn("department_reasons", dropoff_data)
+        self.assertIn("stage_reasons", dropoff_data)
+        self.assertGreater(len(dropoff_data["detailed_reasons"]), 0)
+        print(" [OK] Analytics Dropoff Endpoint Route Verified successfully!")
+
 if __name__ == "__main__":
     unittest.main()
+

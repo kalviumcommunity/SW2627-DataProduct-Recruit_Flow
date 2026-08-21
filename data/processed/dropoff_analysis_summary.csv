@@ -1,0 +1,6 @@
+department,stage,rejection_reason,count
+Finance,Interview,Candidate Withdrew,1
+Finance,Joined,No Show,1
+IT,Interview,Technical Mismatch,3
+Sales,Joined,No Show,1
+Sales,Offer,Offer Declined - Better Opportunity,1

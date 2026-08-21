@@ -35,3 +35,20 @@ def get_role_summary() -> List[Dict[str, Any]]:
         with open(json_path, "r") as f:
             return json.load(f)
     return []
+
+def get_reasons_summary() -> List[Dict[str, Any]]:
+    """Reads processed reasons analysis summary JSON."""
+    json_path = os.path.join(PROCESSED_DIR, "reasons_analysis_summary.json")
+    if os.path.exists(json_path):
+        with open(json_path, "r") as f:
+            return json.load(f)
+    return []
+
+def get_dropoff_summary() -> Dict[str, Any]:
+    """Reads processed drop-off cross-tabulation summary JSON."""
+    json_path = os.path.join(PROCESSED_DIR, "dropoff_analysis_summary.json")
+    if os.path.exists(json_path):
+        with open(json_path, "r") as f:
+            return json.load(f)
+    return {}
+

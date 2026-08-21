@@ -15,6 +15,8 @@ from src.transformation.feature_engineering import engineer_features as run_feat
 from src.analysis.funnel import calculate_funnel as run_funnel_calculator
 from src.analysis.department import calculate_department_analytics as run_department_analysis
 from src.analysis.role import calculate_role_analytics as run_role_analysis
+from src.analysis.reasons import calculate_reasons as run_reasons_analysis
+from src.analysis.dropoff import calculate_dropoff as run_dropoff_analysis
 
 router = APIRouter(prefix="/upload", tags=["Upload"])
 
@@ -80,6 +82,8 @@ async def trigger_full_pipeline():
         run_funnel_calculator()
         run_department_analysis()
         run_role_analysis()
+        run_reasons_analysis()
+        run_dropoff_analysis()
         
         return {
             "status": "success",
