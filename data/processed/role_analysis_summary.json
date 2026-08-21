@@ -1,0 +1,92 @@
+[
+  {
+    "department": "Finance",
+    "role": "Accountant",
+    "total_candidates": 1,
+    "dropped_candidates": 1,
+    "joined_candidates": 0,
+    "role_dropoff_rate": 100.0,
+    "department_average_dropoff_rate": 100.0,
+    "delta_from_department_average": 0.0
+  },
+  {
+    "department": "Finance",
+    "role": "Financial Analyst",
+    "total_candidates": 1,
+    "dropped_candidates": 1,
+    "joined_candidates": 0,
+    "role_dropoff_rate": 100.0,
+    "department_average_dropoff_rate": 100.0,
+    "delta_from_department_average": 0.0
+  },
+  {
+    "department": "HR",
+    "role": "HR Executive",
+    "total_candidates": 1,
+    "dropped_candidates": 0,
+    "joined_candidates": 1,
+    "role_dropoff_rate": 0.0,
+    "department_average_dropoff_rate": 0.0,
+    "delta_from_department_average": 0.0
+  },
+  {
+    "department": "IT",
+    "role": "Data Engineer",
+    "total_candidates": 1,
+    "dropped_candidates": 1,
+    "joined_candidates": 0,
+    "role_dropoff_rate": 100.0,
+    "department_average_dropoff_rate": 60.0,
+    "delta_from_department_average": 40.0
+  },
+  {
+    "department": "IT",
+    "role": "QA Engineer",
+    "total_candidates": 1,
+    "dropped_candidates": 1,
+    "joined_candidates": 0,
+    "role_dropoff_rate": 100.0,
+    "department_average_dropoff_rate": 60.0,
+    "delta_from_department_average": 40.0
+  },
+  {
+    "department": "IT",
+    "role": "Backend Developer",
+    "total_candidates": 2,
+    "dropped_candidates": 1,
+    "joined_candidates": 1,
+    "role_dropoff_rate": 50.0,
+    "department_average_dropoff_rate": 60.0,
+    "delta_from_department_average": -10.0
+  },
+  {
+    "department": "IT",
+    "role": "Frontend Developer",
+    "total_candidates": 1,
+    "dropped_candidates": 0,
+    "joined_candidates": 1,
+    "role_dropoff_rate": 0.0,
+    "department_average_dropoff_rate": 60.0,
+    "delta_from_department_average": -60.0
+  },
+  {
+    "department": "Sales",
+    "role": "Sales Executive",
+    "total_candidates": 1,
+    "dropped_candidates": 1,
+    "joined_candidates": 0,
+    "role_dropoff_rate": 100.0,
+    "department_average_dropoff_rate": 100.0,
+    "delta_from_department_average": 0.0
+  },
+  {
+    "department": "Sales",
+    "role": "Sales Manager",
+    "total_candidates": 1,
+    "dropped_candidates": 1,
+    "joined_candidates": 0,
+    "role_dropoff_rate": 100.0,
+    "department_average_dropoff_rate": 100.0,
+    "delta_from_department_average": 0.0
+  }
+]

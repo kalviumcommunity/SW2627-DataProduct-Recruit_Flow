@@ -13,6 +13,8 @@ from src.validation.validate_data import validate_datasets as run_validation
 from src.transformation.build_candidate_journey import build_journeys as run_journey_builder
 from src.transformation.feature_engineering import engineer_features as run_feature_engineering
 from src.analysis.funnel import calculate_funnel as run_funnel_calculator
+from src.analysis.department import calculate_department_analytics as run_department_analysis
+from src.analysis.role import calculate_role_analytics as run_role_analysis
 
 router = APIRouter(prefix="/upload", tags=["Upload"])
 
@@ -76,6 +78,8 @@ async def trigger_full_pipeline():
         run_journey_builder()
         run_feature_engineering()
         run_funnel_calculator()
+        run_department_analysis()
+        run_role_analysis()
         
         return {
             "status": "success",

@@ -1,0 +1,38 @@
+[
+  {
+    "department": "Finance",
+    "total_candidates": 2,
+    "dropped_candidates": 2,
+    "joined_candidates": 0,
+    "dropoff_rate": 100.0,
+    "company_average_dropoff_rate": 70.0,
+    "delta_from_company_average": 30.0
+  },
+  {
+    "department": "HR",
+    "total_candidates": 1,
+    "dropped_candidates": 0,
+    "joined_candidates": 1,
+    "dropoff_rate": 0.0,
+    "company_average_dropoff_rate": 70.0,
+    "delta_from_company_average": -70.0
+  },
+  {
+    "department": "IT",
+    "total_candidates": 5,
+    "dropped_candidates": 3,
+    "joined_candidates": 2,
+    "dropoff_rate": 60.0,
+    "company_average_dropoff_rate": 70.0,
+    "delta_from_company_average": -10.0
+  },
+  {
+    "department": "Sales",
+    "total_candidates": 2,
+    "dropped_candidates": 2,
+    "joined_candidates": 0,
+    "dropoff_rate": 100.0,
+    "company_average_dropoff_rate": 70.0,
+    "delta_from_company_average": 30.0
+  }
+]
