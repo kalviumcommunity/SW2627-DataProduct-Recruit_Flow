@@ -4,7 +4,8 @@ from backend.services.analytics_service import (
     get_department_summary,
     get_role_summary,
     get_reasons_summary,
-    get_dropoff_summary
+    get_dropoff_summary,
+    get_stage_duration_summary
 )
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
@@ -33,4 +34,10 @@ async def get_reasons():
 async def get_dropoff():
     """Returns drop-off reason cross-tabulation by stage and department."""
     return get_dropoff_summary()
+
+@router.get("/duration")
+async def get_stage_duration():
+    """Returns stage duration, time-to-hire, and velocity analytics."""
+    return get_stage_duration_summary()
+
 

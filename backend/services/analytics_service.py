@@ -52,3 +52,12 @@ def get_dropoff_summary() -> Dict[str, Any]:
             return json.load(f)
     return {}
 
+def get_stage_duration_summary() -> Dict[str, Any]:
+    """Reads processed stage duration & velocity analysis summary JSON."""
+    json_path = os.path.join(PROCESSED_DIR, "stage_duration_summary.json")
+    if os.path.exists(json_path):
+        with open(json_path, "r") as f:
+            return json.load(f)
+    return {}
+
+
