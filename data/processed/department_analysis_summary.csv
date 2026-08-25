@@ -1,0 +1,5 @@
+department,total_candidates,dropped_candidates,joined_candidates,dropoff_rate,company_average_dropoff_rate,delta_from_company_average
+Finance,2,2,0,100.0,70.0,30.0
+HR,1,0,1,0.0,70.0,-70.0
+IT,5,3,2,60.0,70.0,-10.0
+Sales,2,2,0,100.0,70.0,30.0

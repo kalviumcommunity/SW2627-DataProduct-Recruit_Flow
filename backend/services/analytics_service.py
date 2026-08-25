@@ -19,3 +19,54 @@ def get_candidate_features() -> List[Dict[str, Any]]:
         with open(journeys_path, "r") as f:
             return json.load(f)
     return []
+
+def get_department_summary() -> List[Dict[str, Any]]:
+    """Reads processed department analysis summary JSON."""
+    json_path = os.path.join(PROCESSED_DIR, "department_analysis_summary.json")
+    if os.path.exists(json_path):
+        with open(json_path, "r") as f:
+            return json.load(f)
+    return []
+
+def get_role_summary() -> List[Dict[str, Any]]:
+    """Reads processed role analysis summary JSON."""
+    json_path = os.path.join(PROCESSED_DIR, "role_analysis_summary.json")
+    if os.path.exists(json_path):
+        with open(json_path, "r") as f:
+            return json.load(f)
+    return []
+
+def get_reasons_summary() -> List[Dict[str, Any]]:
+    """Reads processed reasons analysis summary JSON."""
+    json_path = os.path.join(PROCESSED_DIR, "reasons_analysis_summary.json")
+    if os.path.exists(json_path):
+        with open(json_path, "r") as f:
+            return json.load(f)
+    return []
+
+def get_dropoff_summary() -> Dict[str, Any]:
+    """Reads processed drop-off cross-tabulation summary JSON."""
+    json_path = os.path.join(PROCESSED_DIR, "dropoff_analysis_summary.json")
+    if os.path.exists(json_path):
+        with open(json_path, "r") as f:
+            return json.load(f)
+    return {}
+
+def get_stage_duration_summary() -> Dict[str, Any]:
+    """Reads processed stage duration & velocity analysis summary JSON."""
+    json_path = os.path.join(PROCESSED_DIR, "stage_duration_summary.json")
+    if os.path.exists(json_path):
+        with open(json_path, "r") as f:
+            return json.load(f)
+    return {}
+
+def get_intelligence_recommendations() -> Dict[str, Any]:
+    """Reads processed automated HR intelligence & recommendations JSON."""
+    json_path = os.path.join(PROCESSED_DIR, "hr_intelligence_recommendations.json")
+    if os.path.exists(json_path):
+        with open(json_path, "r") as f:
+            return json.load(f)
+    return {}
+
+
+

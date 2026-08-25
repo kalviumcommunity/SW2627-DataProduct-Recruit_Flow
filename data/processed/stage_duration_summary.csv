@@ -1,0 +1,6 @@
+stage_order,stage,candidates_count,avg_duration_days,median_duration_days,min_duration_days,max_duration_days,std_duration_days,p75_duration_days,is_bottleneck,bottleneck_severity
+1,Application,10,1.1,1.0,1,2,0.32,1.0,False,Low
+2,Screening,10,3.0,3.0,3,3,0.0,3.0,False,Low
+3,Interview,10,2.7,3.0,1,5,1.25,3.0,False,Low
+4,Offer,6,4.33,4.5,2,6,1.63,5.75,True,Medium
+5,Joined,5,7.6,0.0,0,19,10.41,19.0,True,High

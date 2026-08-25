@@ -1,0 +1,10 @@
+department,role,total_candidates,dropped_candidates,joined_candidates,role_dropoff_rate,department_average_dropoff_rate,delta_from_department_average
+Finance,Accountant,1,1,0,100.0,100.0,0.0
+Finance,Financial Analyst,1,1,0,100.0,100.0,0.0
+HR,HR Executive,1,0,1,0.0,0.0,0.0
+IT,Data Engineer,1,1,0,100.0,60.0,40.0
+IT,QA Engineer,1,1,0,100.0,60.0,40.0
+IT,Backend Developer,2,1,1,50.0,60.0,-10.0
+IT,Frontend Developer,1,0,1,0.0,60.0,-60.0
+Sales,Sales Executive,1,1,0,100.0,100.0,0.0
+Sales,Sales Manager,1,1,0,100.0,100.0,0.0

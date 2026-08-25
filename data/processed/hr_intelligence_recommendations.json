@@ -1,0 +1,115 @@
+{
+  "anomalies_detected": [
+    {
+      "type": "STAGE_DURATION_SPIKE",
+      "target": "Joined",
+      "metric": "avg_duration_days",
+      "value": 3.8,
+      "benchmark": 2.64,
+      "percentage_above_benchmark": 43.9
+    },
+    {
+      "type": "DEPARTMENT_DROPOFF_SPIKE",
+      "target": "Finance",
+      "metric": "dropoff_rate",
+      "value": 100.0,
+      "benchmark": 70.0,
+      "percentage_above_benchmark": 30.0
+    },
+    {
+      "type": "DEPARTMENT_DROPOFF_SPIKE",
+      "target": "Sales",
+      "metric": "dropoff_rate",
+      "value": 100.0,
+      "benchmark": 70.0,
+      "percentage_above_benchmark": 30.0
+    },
+    {
+      "type": "REJECTION_REASON_CLUSTER",
+      "target": "Technical Mismatch",
+      "metric": "reason_percentage",
+      "value": 42.9,
+      "benchmark": 10.0,
+      "percentage_above_benchmark": 328.6
+    },
+    {
+      "type": "REJECTION_REASON_CLUSTER",
+      "target": "No Show",
+      "metric": "reason_percentage",
+      "value": 28.6,
+      "benchmark": 10.0,
+      "percentage_above_benchmark": 185.7
+    },
+    {
+      "type": "DELAYED_DROPOFF_INEFFICIENCY",
+      "target": "Pipeline SLA",
+      "metric": "delayed_dropoffs_count",
+      "value": 1,
+      "benchmark": 0,
+      "percentage_above_benchmark": 100.0
+    }
+  ],
+  "recommendations_count": 6,
+  "recommendations": [
+    {
+      "id": "REC-STAGE-JOINED",
+      "priority": "HIGH",
+      "category": "Pipeline Velocity",
+      "target_stage": "Joined",
+      "target_department": "All",
+      "issue": "Joined stage duration (3.8 days) is 43.9% above the pipeline benchmark (2.6 days).",
+      "recommended_action": "Streamline onboarding documentation and implement weekly pre-joining touchpoints during notice period to compress Joined turnaround time.",
+      "expected_impact": "Reduce total recruitment cycle time by 30-40% and prevent candidate ghosting."
+    },
+    {
+      "id": "REC-DEPT-FINANCE",
+      "priority": "HIGH",
+      "category": "Department Attrition",
+      "target_stage": "Multiple",
+      "target_department": "Finance",
+      "issue": "Finance department drop-off rate (100.0%) exceeds company average (70.0%) by +30.0%.",
+      "recommended_action": "Conduct an audit of Finance interview criteria, compensation benchmarking, and role expectations with department hiring managers.",
+      "expected_impact": "Improve departmental offer acceptance and conversion rates by 20-25%."
+    },
+    {
+      "id": "REC-DEPT-SALES",
+      "priority": "HIGH",
+      "category": "Department Attrition",
+      "target_stage": "Multiple",
+      "target_department": "Sales",
+      "issue": "Sales department drop-off rate (100.0%) exceeds company average (70.0%) by +30.0%.",
+      "recommended_action": "Conduct an audit of Sales interview criteria, compensation benchmarking, and role expectations with department hiring managers.",
+      "expected_impact": "Improve departmental offer acceptance and conversion rates by 20-25%."
+    },
+    {
+      "id": "REC-SCREENING-TECH-MISMATCH",
+      "priority": "HIGH",
+      "category": "Candidate Quality & Screening",
+      "target_stage": "Screening & Technical Interview",
+      "target_department": "IT / Engineering",
+      "issue": "'Technical Mismatch' accounts for 42.9% of total candidate drop-offs.",
+      "recommended_action": "Introduce automated coding pre-assessments and stricter resume keyword screening before scheduling live technical rounds.",
+      "expected_impact": "Save 15+ engineering interview hours per week and increase interview pass-through rate."
+    },
+    {
+      "id": "REC-ONBOARDING-NO-SHOW",
+      "priority": "MEDIUM",
+      "category": "Candidate Engagement",
+      "target_stage": "Joined",
+      "target_department": "All",
+      "issue": "No-show drop-offs represent 28.6% of candidate loss at the joining stage.",
+      "recommended_action": "Establish an automated SMS/WhatsApp reminder system and assign a buddy mentor before day 1.",
+      "expected_impact": "Reduce day-1 no-shows to under 5%."
+    },
+    {
+      "id": "REC-SLA-DELAYED-DROPOFFS",
+      "priority": "MEDIUM",
+      "category": "Process Governance",
+      "target_stage": "Interview",
+      "target_department": "All",
+      "issue": "1 candidates spent significantly above-median time in interview stages before ultimately being rejected.",
+      "recommended_action": "Enforce a strict 5-day SLA from final round interview to hiring manager feedback decision.",
+      "expected_impact": "Eliminate candidate frustration and prevent prolonged interview latency."
+    }
+  ]
+}

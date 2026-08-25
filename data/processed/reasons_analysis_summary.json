@@ -1,0 +1,26 @@
+[
+  {
+    "reason": "Technical Mismatch",
+    "count": 3,
+    "value": 3,
+    "percentage": 42.86
+  },
+  {
+    "reason": "No Show",
+    "count": 2,
+    "value": 2,
+    "percentage": 28.57
+  },
+  {
+    "reason": "Candidate Withdrew",
+    "count": 1,
+    "value": 1,
+    "percentage": 14.29
+  },
+  {
+    "reason": "Offer Declined - Better Opportunity",
+    "count": 1,
+    "value": 1,
+    "percentage": 14.29
+  }
+]

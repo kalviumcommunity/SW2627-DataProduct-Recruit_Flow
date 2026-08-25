@@ -1,0 +1,136 @@
+{
+  "stage_metrics": [
+    {
+      "stage_order": 1,
+      "stage": "Application",
+      "candidates_count": 10,
+      "avg_duration_days": 1.1,
+      "median_duration_days": 1.0,
+      "min_duration_days": 1,
+      "max_duration_days": 2,
+      "std_duration_days": 0.32,
+      "p75_duration_days": 1.0,
+      "is_bottleneck": false,
+      "bottleneck_severity": "Low"
+    },
+    {
+      "stage_order": 2,
+      "stage": "Screening",
+      "candidates_count": 10,
+      "avg_duration_days": 3.0,
+      "median_duration_days": 3.0,
+      "min_duration_days": 3,
+      "max_duration_days": 3,
+      "std_duration_days": 0.0,
+      "p75_duration_days": 3.0,
+      "is_bottleneck": false,
+      "bottleneck_severity": "Low"
+    },
+    {
+      "stage_order": 3,
+      "stage": "Interview",
+      "candidates_count": 10,
+      "avg_duration_days": 2.7,
+      "median_duration_days": 3.0,
+      "min_duration_days": 1,
+      "max_duration_days": 5,
+      "std_duration_days": 1.25,
+      "p75_duration_days": 3.0,
+      "is_bottleneck": false,
+      "bottleneck_severity": "Low"
+    },
+    {
+      "stage_order": 4,
+      "stage": "Offer",
+      "candidates_count": 6,
+      "avg_duration_days": 4.33,
+      "median_duration_days": 4.5,
+      "min_duration_days": 2,
+      "max_duration_days": 6,
+      "std_duration_days": 1.63,
+      "p75_duration_days": 5.75,
+      "is_bottleneck": true,
+      "bottleneck_severity": "Medium"
+    },
+    {
+      "stage_order": 5,
+      "stage": "Joined",
+      "candidates_count": 5,
+      "avg_duration_days": 7.6,
+      "median_duration_days": 0.0,
+      "min_duration_days": 0,
+      "max_duration_days": 19,
+      "std_duration_days": 10.41,
+      "p75_duration_days": 19.0,
+      "is_bottleneck": true,
+      "bottleneck_severity": "High"
+    }
+  ],
+  "department_velocity": [
+    {
+      "department": "Finance",
+      "total_candidates": 2,
+      "avg_pipeline_duration_days": 9.0,
+      "median_pipeline_duration_days": 9.0,
+      "avg_time_to_hire_days": NaN,
+      "avg_time_to_drop_days": 9.0,
+      "delayed_dropoffs_count": 0
+    },
+    {
+      "department": "HR",
+      "total_candidates": 1,
+      "avg_pipeline_duration_days": 30.0,
+      "median_pipeline_duration_days": 30.0,
+      "avg_time_to_hire_days": 30.0,
+      "avg_time_to_drop_days": NaN,
+      "delayed_dropoffs_count": 0
+    },
+    {
+      "department": "IT",
+      "total_candidates": 5,
+      "avg_pipeline_duration_days": 13.2,
+      "median_pipeline_duration_days": 9.0,
+      "avg_time_to_hire_days": 22.5,
+      "avg_time_to_drop_days": 7.0,
+      "delayed_dropoffs_count": 1
+    },
+    {
+      "department": "Sales",
+      "total_candidates": 2,
+      "avg_pipeline_duration_days": 12.0,
+      "median_pipeline_duration_days": 12.0,
+      "avg_time_to_hire_days": NaN,
+      "avg_time_to_drop_days": 12.0,
+      "delayed_dropoffs_count": 0
+    }
+  ],
+  "outcome_velocity": {
+    "overall_time_to_hire": {
+      "hired_candidates_count": 3,
+      "avg_days": 25.0,
+      "median_days": 30.0,
+      "min_days": 13,
+      "max_days": 32
+    },
+    "overall_time_to_drop": {
+      "dropped_candidates_count": 7,
+      "avg_days": 9.0,
+      "median_days": 9.0,
+      "min_days": 5,
+      "max_days": 13
+    },
+    "delayed_dropoffs": {
+      "count": 1,
+      "percentage_of_dropped": 14.29
+    }
+  },
+  "bottleneck_insights": {
+    "primary_bottleneck_stage": "Joined",
+    "max_average_stage_duration_days": 7.6,
+    "average_stage_duration_benchmark_days": 3.75,
+    "flagged_bottleneck_stages": [
+      "Offer",
+      "Joined"
+    ]
+  }
+}
