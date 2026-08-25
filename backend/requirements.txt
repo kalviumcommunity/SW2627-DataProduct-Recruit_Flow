@@ -7,3 +7,8 @@ pandas==2.1.3 ## Python library for - working with structured/tabular data
 openpyxl==3.1.2 ## OpenPyXL is used to work with Excel .xlsx files.
 pytest==7.4.3 ## Pytest is used for testing the Python application.
 Faker==20.1.0 ## o generate names, emails, and dates. They define a "factory" that generates entities with referential integrity 
+bcrypt==5.0.0 ## Password hashing library for HR authentication
+pyjwt==2.13.0 ## JSON Web Token encode/decode for HR authentication
+httpx==0.25.2 ## HTTP client for test suite and API interactions
+
+
