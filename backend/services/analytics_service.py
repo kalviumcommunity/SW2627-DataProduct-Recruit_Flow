@@ -60,4 +60,13 @@ def get_stage_duration_summary() -> Dict[str, Any]:
             return json.load(f)
     return {}
 
+def get_intelligence_recommendations() -> Dict[str, Any]:
+    """Reads processed automated HR intelligence & recommendations JSON."""
+    json_path = os.path.join(PROCESSED_DIR, "hr_intelligence_recommendations.json")
+    if os.path.exists(json_path):
+        with open(json_path, "r") as f:
+            return json.load(f)
+    return {}
+
+
 

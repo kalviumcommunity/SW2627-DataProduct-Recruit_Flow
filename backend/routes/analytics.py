@@ -5,7 +5,8 @@ from backend.services.analytics_service import (
     get_role_summary,
     get_reasons_summary,
     get_dropoff_summary,
-    get_stage_duration_summary
+    get_stage_duration_summary,
+    get_intelligence_recommendations
 )
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
@@ -39,5 +40,16 @@ async def get_dropoff():
 async def get_stage_duration():
     """Returns stage duration, time-to-hire, and velocity analytics."""
     return get_stage_duration_summary()
+
+@router.get("/recommendations")
+async def get_recommendations():
+    """Returns automated HR intelligence and action recommendations."""
+    return get_intelligence_recommendations()
+
+@router.get("/intelligence")
+async def get_intelligence():
+    """Alias for automated HR intelligence and action recommendations."""
+    return get_intelligence_recommendations()
+
 
 
