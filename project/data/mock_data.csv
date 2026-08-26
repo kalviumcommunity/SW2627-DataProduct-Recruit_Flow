@@ -1,0 +1,13 @@
+candidate_id,department,role,application_date,Application,Screening,Interview,Offer,Joined,dropoff_reason
+C-001,Engineering,Software Engineer,2026-01-05,1,1,1,1,1,
+C-002,Engineering,Data Analyst,2026-01-07,1,1,1,0,0,Offer declined
+C-003,Sales,Account Executive,2026-01-12,1,1,0,0,0,Technical skills
+C-004,Engineering,Software Engineer,2026-02-02,1,1,1,1,1,
+C-005,Marketing,Content Strategist,2026-02-10,1,0,0,0,0,Resume rejected
+C-006,Sales,Account Executive,2026-02-18,1,1,1,0,0,Candidate withdrew
+C-007,Engineering,Data Analyst,2026-03-01,1,1,1,1,1,
+C-008,Marketing,Content Strategist,2026-03-04,1,1,1,0,0,Offer declined
+C-009,Engineering,Software Engineer,2026-03-15,1,1,0,0,0,Technical skills
+C-010,Sales,Account Executive,2026-03-20,1,1,1,1,1,
+C-011,Engineering,Data Analyst,2026-04-02,1,1,1,1,1,
+C-012,Marketing,Content Strategist,2026-04-05,1,0,0,0,0,Resume rejected
