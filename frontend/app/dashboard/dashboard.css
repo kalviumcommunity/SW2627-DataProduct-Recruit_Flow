@@ -2,12 +2,14 @@
   display: flex;
   min-height: 100vh;
   background-color: #09090B; /* zinc-950 */
+  color: #FAFAFA;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 .dashboard-sidebar {
   width: 240px;
   min-width: 240px;
-  background-color: #18181B; /* zinc-900 */
+  background-color: #121215;
   border-right: 1px solid #27272A;
   position: fixed;
   top: 0;
@@ -24,6 +26,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background-color: #09090B;
 }
 
 .dashboard-topbar {
@@ -33,26 +36,52 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 24px;
-  background-color: #09090B;
+  padding: 12px 28px;
+  background-color: rgba(9, 9, 11, 0.95);
+  backdrop-filter: blur(8px);
   border-bottom: 1px solid #27272A;
 }
 
 .dashboard-content {
-  padding: 24px;
+  padding: 24px 28px;
   flex: 1;
 }
 
 .card {
-  background-color: #18181B; /* zinc-900 */
+  background-color: #141417;
   border: 1px solid #27272A;
   border-radius: 8px;
-  padding: 24px;
+  padding: 22px;
 }
 
 .kpi-card {
-  background-color: #18181B;
+  background-color: #141417;
   border: 1px solid #27272A;
   border-radius: 8px;
-  padding: 20px;
+  padding: 18px 20px;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.kpi-card:hover {
+  border-color: #3F3F46;
+  transform: translateY(-1px);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090B;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272A;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3F3F46;
 }
