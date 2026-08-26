@@ -1,0 +1,11 @@
+{
+  "candidates": 5000,
+  "jobs": 250,
+  "applications": 25000,
+  "stage_events": 100654,
+  "interviews": 42389,
+  "offers": 1674,
+  "onboarding": 596,
+  "applications_reaching_offer": 2830,
+  "applications_reaching_joined": 211
+}
