@@ -16,4 +16,14 @@ backend/app/__pycache__/
 task_log/
 *.log
 *.db
+# Next.js and frontend build artifacts
+.next/
+frontend/.next/
+node_modules/
+frontend/node_modules/
+dist/
+build/
+
+# OS and system files
 .DS_Store
+
