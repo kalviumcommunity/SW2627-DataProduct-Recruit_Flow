@@ -15,3 +15,5 @@ backend/app/__pycache__/
 .system_generated/
 task_log/
 *.log
+*.db
+.DS_Store
