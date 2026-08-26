@@ -80,7 +80,6 @@ CANDIDATE_CHAOS = {
     "email": [nullify, lambda x: x.upper() if x else None, add_spaces],
     "first_name": [add_spaces, lower_case],
     "last_name": [add_spaces, lower_case],
-    "candidate_id": [duplicate_identity]  # Simulate two IDs for same person
 }
 
 JOB_CHAOS = {

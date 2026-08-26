@@ -22,7 +22,70 @@ def _email_domain(email: Optional[str]) -> Optional[str]:
     return email.strip().lower().split("@", 1)[1]
 
 
-def _get_department_id(cur, department_name: str) -> Optional[int]:
+def _normalize_text(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    return value.strip().lower()
+
+
+def _prefetch_lookup_cache(cur) -> Dict[str, Dict[Any, Any]]:
+    cache: Dict[str, Dict[Any, Any]] = {
+        "candidate_by_id": {},
+        "candidate_by_email": {},
+        "candidate_by_phone": {},
+        "job_by_id": {},
+        "job_by_title_dept": {},
+        "application_by_id": {},
+        "application_details_by_id": {},
+        "offer_by_id": {},
+        "stage_by_name": {},
+        "department_by_name": {},
+    }
+
+    cur.execute("SELECT id, name FROM core.departments")
+    for dept_id, name in cur.fetchall():
+        cache["department_by_name"][_normalize_text(name)] = dept_id
+
+    cur.execute("SELECT id, name FROM core.stages")
+    for stage_id, name in cur.fetchall():
+        cache["stage_by_name"][_normalize_text(name)] = stage_id
+
+    cur.execute("SELECT id, candidate_id, email, phone FROM core.candidates")
+    for candidate_row in cur.fetchall():
+        candidate_db_id, candidate_id, email, phone = candidate_row
+        if candidate_id:
+            cache["candidate_by_id"][candidate_id] = candidate_db_id
+        if email:
+            cache["candidate_by_email"][_normalize_text(email)] = candidate_db_id
+        if phone:
+            cache["candidate_by_phone"][_normalize_text(phone)] = candidate_db_id
+
+    cur.execute("SELECT id, job_id, job_title, department_id FROM core.jobs")
+    for job_db_id, job_id, job_title, department_id in cur.fetchall():
+        if job_id:
+            cache["job_by_id"][job_id] = job_db_id
+        if job_title and department_id:
+            cache["job_by_title_dept"][(_normalize_text(job_title), department_id)] = job_db_id
+
+    cur.execute("SELECT id, application_id, candidate_id FROM core.applications")
+    for app_db_id, application_id, candidate_id in cur.fetchall():
+        if application_id:
+            cache["application_by_id"][application_id] = app_db_id
+            cache["application_details_by_id"][application_id] = (app_db_id, candidate_id)
+
+    cur.execute("SELECT id, offer_id FROM core.offers")
+    for offer_db_id, offer_id in cur.fetchall():
+        if offer_id:
+            cache["offer_by_id"][offer_id] = offer_db_id
+
+    return cache
+
+
+def _get_department_id(cur, department_name: str, lookup_cache: Optional[Dict[str, Dict[Any, Any]]] = None) -> Optional[int]:
+    normalized = _normalize_text(department_name)
+    if lookup_cache and normalized in lookup_cache["department_by_name"]:
+        return lookup_cache["department_by_name"][normalized]
+
     cur.execute(
         """
         SELECT id
@@ -32,6 +95,8 @@ def _get_department_id(cur, department_name: str) -> Optional[int]:
         (department_name,),
     )
     result = cur.fetchone()
+    if result and lookup_cache and normalized:
+        lookup_cache["department_by_name"][normalized] = result[0]
     return result[0] if result else None
 
 
@@ -80,7 +145,12 @@ def _record_load_error(
     )
 
 
-def resolve_candidate(cur, staging_candidate: Dict[str, Any], batch_id: str) -> Tuple[int, str, bool]:
+def resolve_candidate(
+    cur,
+    staging_candidate: Dict[str, Any],
+    batch_id: str,
+    lookup_cache: Optional[Dict[str, Dict[Any, Any]]] = None,
+) -> Tuple[int, str, bool]:
     """
     Resolves a staging candidate to a core candidate ID.
     Returns: (core_candidate_id, match_type)
@@ -90,6 +160,8 @@ def resolve_candidate(cur, staging_candidate: Dict[str, Any], batch_id: str) -> 
     phone = staging_candidate.get("phone")
 
     if candidate_id:
+        if lookup_cache and candidate_id in lookup_cache["candidate_by_id"]:
+            return lookup_cache["candidate_by_id"][candidate_id], "existing_id", False
         cur.execute(
             """
             SELECT id
@@ -100,9 +172,25 @@ def resolve_candidate(cur, staging_candidate: Dict[str, Any], batch_id: str) -> 
         )
         result = cur.fetchone()
         if result:
+            if lookup_cache:
+                lookup_cache["candidate_by_id"][candidate_id] = result[0]
             return result[0], "existing_id", False
 
     if email:
+        normalized_email = _normalize_text(email)
+        if lookup_cache and normalized_email in lookup_cache["candidate_by_email"]:
+            result_id = lookup_cache["candidate_by_email"][normalized_email]
+            if candidate_id:
+                cur.execute(
+                    """
+                    UPDATE core.candidates
+                    SET candidate_id = %s
+                    WHERE id = %s
+                    """,
+                    (candidate_id, result_id),
+                )
+                lookup_cache["candidate_by_id"][candidate_id] = result_id
+            return result_id, "email_match", False
         cur.execute(
             """
             SELECT id
@@ -125,9 +213,27 @@ def resolve_candidate(cur, staging_candidate: Dict[str, Any], batch_id: str) -> 
                     """,
                     (candidate_id, result[0]),
                 )
+                if lookup_cache:
+                    lookup_cache["candidate_by_id"][candidate_id] = result[0]
+            if lookup_cache and normalized_email:
+                lookup_cache["candidate_by_email"][normalized_email] = result[0]
             return result[0], "email_match", False
 
     if phone:
+        normalized_phone = _normalize_text(phone)
+        if lookup_cache and normalized_phone in lookup_cache["candidate_by_phone"]:
+            result_id = lookup_cache["candidate_by_phone"][normalized_phone]
+            if candidate_id:
+                cur.execute(
+                    """
+                    UPDATE core.candidates
+                    SET candidate_id = %s
+                    WHERE id = %s
+                    """,
+                    (candidate_id, result_id),
+                )
+                lookup_cache["candidate_by_id"][candidate_id] = result_id
+            return result_id, "phone_match", False
         cur.execute(
             """
             SELECT id
@@ -150,6 +256,10 @@ def resolve_candidate(cur, staging_candidate: Dict[str, Any], batch_id: str) -> 
                     """,
                     (candidate_id, result[0]),
                 )
+                if lookup_cache:
+                    lookup_cache["candidate_by_id"][candidate_id] = result[0]
+            if lookup_cache and normalized_phone:
+                lookup_cache["candidate_by_phone"][normalized_phone] = result[0]
             return result[0], "phone_match", False
 
     cur.execute(
@@ -170,6 +280,13 @@ def resolve_candidate(cur, staging_candidate: Dict[str, Any], batch_id: str) -> 
         ),
     )
     new_id = cur.fetchone()[0]
+    if lookup_cache:
+        if candidate_id:
+            lookup_cache["candidate_by_id"][candidate_id] = new_id
+        if email:
+            lookup_cache["candidate_by_email"][_normalize_text(email)] = new_id
+        if phone:
+            lookup_cache["candidate_by_phone"][_normalize_text(phone)] = new_id
 
     first_name = (staging_candidate.get("first_name") or "").strip().lower()
     last_name = (staging_candidate.get("last_name") or "").strip().lower()
@@ -205,11 +322,19 @@ def resolve_candidate(cur, staging_candidate: Dict[str, Any], batch_id: str) -> 
     return new_id, "created_new", False
 
 
-def resolve_job(cur, staging_job: Dict[str, Any], department_id: int, batch_id: str) -> Tuple[int, str]:
+def resolve_job(
+    cur,
+    staging_job: Dict[str, Any],
+    department_id: int,
+    batch_id: str,
+    lookup_cache: Optional[Dict[str, Dict[Any, Any]]] = None,
+) -> Tuple[int, str]:
     job_id = staging_job.get("job_id")
     job_title = staging_job.get("job_title")
 
     if job_id:
+        if lookup_cache and job_id in lookup_cache["job_by_id"]:
+            return lookup_cache["job_by_id"][job_id], "existing_id"
         cur.execute(
             """
             SELECT id
@@ -220,9 +345,25 @@ def resolve_job(cur, staging_job: Dict[str, Any], department_id: int, batch_id: 
         )
         result = cur.fetchone()
         if result:
+            if lookup_cache:
+                lookup_cache["job_by_id"][job_id] = result[0]
             return result[0], "existing_id"
 
     if job_title and department_id:
+        normalized_title = _normalize_text(job_title)
+        if lookup_cache and (normalized_title, department_id) in lookup_cache["job_by_title_dept"]:
+            result_id = lookup_cache["job_by_title_dept"][(normalized_title, department_id)]
+            if job_id:
+                cur.execute(
+                    """
+                    UPDATE core.jobs
+                    SET job_id = %s
+                    WHERE id = %s
+                    """,
+                    (job_id, result_id),
+                )
+                lookup_cache["job_by_id"][job_id] = result_id
+            return result_id, "title_dept_match"
         cur.execute(
             """
             SELECT id
@@ -245,6 +386,10 @@ def resolve_job(cur, staging_job: Dict[str, Any], department_id: int, batch_id: 
                     """,
                     (job_id, result[0]),
                 )
+                if lookup_cache:
+                    lookup_cache["job_by_id"][job_id] = result[0]
+            if lookup_cache:
+                lookup_cache["job_by_title_dept"][(normalized_title, department_id)] = result[0]
             return result[0], "title_dept_match"
 
     cur.execute(
@@ -266,10 +411,22 @@ def resolve_job(cur, staging_job: Dict[str, Any], department_id: int, batch_id: 
             batch_id,
         ),
     )
-    return cur.fetchone()[0], "created_new"
+    new_id = cur.fetchone()[0]
+    if lookup_cache:
+        if job_id:
+            lookup_cache["job_by_id"][job_id] = new_id
+        if job_title:
+            lookup_cache["job_by_title_dept"][(_normalize_text(job_title), department_id)] = new_id
+    return new_id, "created_new"
 
 
-def resolve_application(cur, application_id: str) -> Optional[int]:
+def resolve_application(
+    cur,
+    application_id: str,
+    lookup_cache: Optional[Dict[str, Dict[Any, Any]]] = None,
+) -> Optional[int]:
+    if lookup_cache and application_id in lookup_cache["application_by_id"]:
+        return lookup_cache["application_by_id"][application_id]
     cur.execute(
         """
         SELECT id
@@ -279,10 +436,18 @@ def resolve_application(cur, application_id: str) -> Optional[int]:
         (application_id,),
     )
     result = cur.fetchone()
+    if result and lookup_cache:
+        lookup_cache["application_by_id"][application_id] = result[0]
     return result[0] if result else None
 
 
-def resolve_application_details(cur, application_id: str) -> Tuple[Optional[int], Optional[int]]:
+def resolve_application_details(
+    cur,
+    application_id: str,
+    lookup_cache: Optional[Dict[str, Dict[Any, Any]]] = None,
+) -> Tuple[Optional[int], Optional[int]]:
+    if lookup_cache and application_id in lookup_cache["application_details_by_id"]:
+        return lookup_cache["application_details_by_id"][application_id]
     cur.execute(
         """
         SELECT id, candidate_id
@@ -294,10 +459,18 @@ def resolve_application_details(cur, application_id: str) -> Tuple[Optional[int]
     result = cur.fetchone()
     if not result:
         return None, None
+    if lookup_cache:
+        lookup_cache["application_details_by_id"][application_id] = (result[0], result[1])
     return result[0], result[1]
 
 
-def resolve_core_candidate_id(cur, candidate_id: str) -> Optional[int]:
+def resolve_core_candidate_id(
+    cur,
+    candidate_id: str,
+    lookup_cache: Optional[Dict[str, Dict[Any, Any]]] = None,
+) -> Optional[int]:
+    if lookup_cache and candidate_id in lookup_cache["candidate_by_id"]:
+        return lookup_cache["candidate_by_id"][candidate_id]
     cur.execute(
         """
         SELECT id
@@ -307,10 +480,18 @@ def resolve_core_candidate_id(cur, candidate_id: str) -> Optional[int]:
         (candidate_id,),
     )
     result = cur.fetchone()
+    if result and lookup_cache:
+        lookup_cache["candidate_by_id"][candidate_id] = result[0]
     return result[0] if result else None
 
 
-def resolve_core_offer_id(cur, offer_id: str) -> Optional[int]:
+def resolve_core_offer_id(
+    cur,
+    offer_id: str,
+    lookup_cache: Optional[Dict[str, Dict[Any, Any]]] = None,
+) -> Optional[int]:
+    if lookup_cache and offer_id in lookup_cache["offer_by_id"]:
+        return lookup_cache["offer_by_id"][offer_id]
     cur.execute(
         """
         SELECT id
@@ -320,6 +501,8 @@ def resolve_core_offer_id(cur, offer_id: str) -> Optional[int]:
         (offer_id,),
     )
     result = cur.fetchone()
+    if result and lookup_cache:
+        lookup_cache["offer_by_id"][offer_id] = result[0]
     return result[0] if result else None
 
 
@@ -328,11 +511,12 @@ def _resolve_application_and_candidate(
     row: Dict[str, Any],
     batch_id: str,
     entity_type: str,
+    lookup_cache: Optional[Dict[str, Dict[Any, Any]]] = None,
 ) -> Tuple[Optional[int], Optional[int]]:
     application_external_id = row.get("application_id")
     candidate_external_id = row.get("candidate_id")
 
-    app_internal_id, app_candidate_id = resolve_application_details(cur, application_external_id)
+    app_internal_id, app_candidate_id = resolve_application_details(cur, application_external_id, lookup_cache)
     if not app_internal_id:
         _record_load_error(
             cur,
@@ -347,7 +531,7 @@ def _resolve_application_and_candidate(
 
     candidate_core_id = None
     if candidate_external_id:
-        candidate_core_id = resolve_core_candidate_id(cur, candidate_external_id)
+        candidate_core_id = resolve_core_candidate_id(cur, candidate_external_id, lookup_cache)
 
     if candidate_core_id and app_candidate_id and candidate_core_id != app_candidate_id:
         _record_load_error(
@@ -416,6 +600,40 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
 
     with get_connection() as conn:
         with conn.cursor() as cur:
+            lookup_cache = _prefetch_lookup_cache(cur)
+
+            cur.execute(
+                """
+                SELECT *
+                FROM staging.candidates
+                WHERE ingestion_batch_id = %s
+                """,
+                (batch_id,),
+            )
+            staging_candidate_rows = cur.fetchall()
+            staging_candidate_cols = [desc[0] for desc in cur.description]
+            staging_candidates_by_id = {
+                row[staging_candidate_cols.index("candidate_id")]: dict(zip(staging_candidate_cols, row))
+                for row in staging_candidate_rows
+                if row[staging_candidate_cols.index("candidate_id")]
+            }
+
+            cur.execute(
+                """
+                SELECT *
+                FROM staging.jobs
+                WHERE ingestion_batch_id = %s
+                """,
+                (batch_id,),
+            )
+            staging_job_rows = cur.fetchall()
+            staging_job_cols = [desc[0] for desc in cur.description]
+            staging_jobs_by_id = {
+                row[staging_job_cols.index("job_id")]: dict(zip(staging_job_cols, row))
+                for row in staging_job_rows
+                if row[staging_job_cols.index("job_id")]
+            }
+
             # Candidates
             cur.execute(
                 """
@@ -432,7 +650,7 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
 
             for record in candidate_rows:
                 row = dict(zip(candidate_cols, record))
-                _, _, flagged = resolve_candidate(cur, row, batch_id)
+                _, _, flagged = resolve_candidate(cur, row, batch_id, lookup_cache)
                 if flagged:
                     counts["possible_duplicates_flagged"] += 1
                 counts["candidates_loaded"] += 1
@@ -453,7 +671,7 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
 
             for record in job_rows:
                 row = dict(zip(job_cols, record))
-                department_id = _get_department_id(cur, row.get("department"))
+                department_id = _get_department_id(cur, row.get("department"), lookup_cache)
                 if not department_id:
                     print(f"Warning: Department '{row.get('department')}' not found in core.departments. Skipping job {row.get('job_id')}")
                     _record_load_error(
@@ -467,7 +685,7 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
                     )
                     counts["load_errors_recorded"] += 1
                     continue
-                resolve_job(cur, row, department_id, batch_id)
+                resolve_job(cur, row, department_id, batch_id, lookup_cache)
                 counts["jobs_loaded"] += 1
 
             # Applications
@@ -487,7 +705,7 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
             for record in app_rows:
                 row = dict(zip(app_cols, record))
                 application_id = row.get("application_id")
-                if resolve_application(cur, application_id):
+                if resolve_application(cur, application_id, lookup_cache):
                     counts["duplicates_skipped"] += 1
                     _record_load_error(
                         cur,
@@ -501,7 +719,7 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
                     counts["load_errors_recorded"] += 1
                     continue
 
-                staging_candidate = _fetch_staging_row_by_external_id(cur, "staging.candidates", "candidate_id", row.get("candidate_id"))
+                staging_candidate = staging_candidates_by_id.get(row.get("candidate_id"))
                 if not staging_candidate:
                     print(f"Warning: Candidate '{row.get('candidate_id')}' not found in staging. Skipping application {application_id}")
                     _record_load_error(
@@ -516,11 +734,11 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
                     counts["load_errors_recorded"] += 1
                     continue
 
-                core_candidate_id, _, flagged = resolve_candidate(cur, staging_candidate, batch_id)
+                core_candidate_id, _, flagged = resolve_candidate(cur, staging_candidate, batch_id, lookup_cache)
                 if flagged:
                     counts["possible_duplicates_flagged"] += 1
 
-                staging_job = _fetch_staging_row_by_external_id(cur, "staging.jobs", "job_id", row.get("job_id"))
+                staging_job = staging_jobs_by_id.get(row.get("job_id"))
                 if not staging_job:
                     print(f"Warning: Job '{row.get('job_id')}' not found in staging. Skipping application {application_id}")
                     _record_load_error(
@@ -535,7 +753,7 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
                     counts["load_errors_recorded"] += 1
                     continue
 
-                department_id = _get_department_id(cur, staging_job.get("department"))
+                department_id = _get_department_id(cur, staging_job.get("department"), lookup_cache)
                 if not department_id:
                     print(f"Warning: Department '{staging_job.get('department')}' not found in core.departments. Skipping application {application_id}")
                     _record_load_error(
@@ -550,7 +768,7 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
                     counts["load_errors_recorded"] += 1
                     continue
 
-                core_job_id, _ = resolve_job(cur, staging_job, department_id, batch_id)
+                core_job_id, _ = resolve_job(cur, staging_job, department_id, batch_id, lookup_cache)
 
                 cur.execute(
                     """
@@ -568,6 +786,8 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
                         batch_id,
                     ),
                 )
+                app_db_id = resolve_application(cur, application_id, lookup_cache)
+                lookup_cache["application_details_by_id"][application_id] = (app_db_id, core_candidate_id)
                 counts["applications_loaded"] += 1
 
             # Stage events
@@ -612,15 +832,7 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
                     counts["load_errors_recorded"] += 1
                     continue
 
-                cur.execute(
-                    """
-                    SELECT id
-                    FROM core.applications
-                    WHERE application_id = %s
-                    """,
-                    (row.get("application_id"),),
-                )
-                app_result = cur.fetchone()
+                app_result = resolve_application(cur, row.get("application_id"), lookup_cache)
                 if not app_result:
                     print(f"Warning: Application '{row.get('application_id')}' not found in core. Skipping stage event {stage_event_id}")
                     _record_load_error(
@@ -635,15 +847,7 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
                     counts["load_errors_recorded"] += 1
                     continue
 
-                cur.execute(
-                    """
-                    SELECT id
-                    FROM core.stages
-                    WHERE name = %s
-                    """,
-                    (row.get("stage_name"),),
-                )
-                stage_result = cur.fetchone()
+                stage_result = lookup_cache["stage_by_name"].get(_normalize_text(row.get("stage_name")))
                 if not stage_result:
                     print(f"Warning: Stage '{row.get('stage_name')}' not found in core.stages. Skipping stage event {stage_event_id}")
                     _record_load_error(
@@ -671,8 +875,8 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
                     """,
                     (
                         stage_event_id,
-                        app_result[0],
-                        stage_result[0],
+                        app_result,
+                        stage_result,
                         row.get("entered_at"),
                         row.get("exited_at"),
                         dropoff_flag,
@@ -726,7 +930,7 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
                     counts["load_errors_recorded"] += 1
                     continue
 
-                app_id, candidate_id = _resolve_application_and_candidate(cur, row, batch_id, "interviews")
+                app_id, candidate_id = _resolve_application_and_candidate(cur, row, batch_id, "interviews", lookup_cache)
                 if not app_id or not candidate_id:
                     counts["load_errors_recorded"] += 1
                     continue
@@ -801,7 +1005,7 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
                     counts["load_errors_recorded"] += 1
                     continue
 
-                app_id, candidate_id = _resolve_application_and_candidate(cur, row, batch_id, "offers")
+                app_id, candidate_id = _resolve_application_and_candidate(cur, row, batch_id, "offers", lookup_cache)
                 if not app_id or not candidate_id:
                     counts["load_errors_recorded"] += 1
                     continue
@@ -875,12 +1079,12 @@ def deduplicate_batch(batch_id: str) -> Dict[str, int]:
                     counts["load_errors_recorded"] += 1
                     continue
 
-                app_id, candidate_id = _resolve_application_and_candidate(cur, row, batch_id, "onboarding")
+                app_id, candidate_id = _resolve_application_and_candidate(cur, row, batch_id, "onboarding", lookup_cache)
                 if not app_id or not candidate_id:
                     counts["load_errors_recorded"] += 1
                     continue
 
-                offer_core_id = resolve_core_offer_id(cur, row.get("offer_id"))
+                offer_core_id = resolve_core_offer_id(cur, row.get("offer_id"), lookup_cache)
                 if not offer_core_id:
                     _record_load_error(
                         cur,

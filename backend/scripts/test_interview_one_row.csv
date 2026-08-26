@@ -1,0 +1,2 @@
+interview_id,application_id,candidate_id,interview_type,scheduled_at,completed_at,interview_status,technical_score,communication_score,overall_score,recommendation,feedback
+INT-TEST-9001,APP-0003,CAND-0015,Technical,2026-08-18T10:00:00,2026-08-18T11:00:00,Completed,4.2,4.4,4.3,Hire,Strong technical communication.
