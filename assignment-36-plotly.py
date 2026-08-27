@@ -1,12 +1,11 @@
 """
-Assignment: Interactive Plotly Chart Design
-Script: assignment-36-plotly.py
-
-Fulfills:
-- Task 1: Two Plotly Charts with rich, multi-column hover tooltips (chart1_revenue_trend.html, chart2_product_performance.html)
-- Task 2: Dropdown filter for instant metric switching without page reloads (chart3_metric_selector.html)
-- Task 3: Native Plotly interactive controls: Zoom, Pan, Box/Lasso Select, Double-click Reset (chart4_interactive.html)
-- Task 4: Streamlit integration readiness & standalone HTML generation
+Interactive Plotly Visualizations & Metric Switchers
+====================================================
+Tasks:
+- Task 1: Create Two Plotly Charts with Hover Tooltips (Revenue Trend & Product Performance)
+- Task 2: Create Dropdown Filter to Toggle Views without Page Reload (updatemenus)
+- Task 3: Enable Zoom, Pan, Box/Lasso Select, and Reset Interactions
+- Task 4: Streamlit Integration (streamlit_plotly_app.py)
 """
 
 import os
@@ -20,404 +19,482 @@ from sqlalchemy import create_engine
 # Output directories
 OUTPUT_DIR = "output_plotly"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs("frontend/public", exist_ok=True)
 
-def get_db_connection(db_path: str = "data_layer.db"):
-    """Returns database connection to data_layer.db."""
-    return sqlite3.connect(db_path)
+# -----------------------------------------------------------------------------
+# 1. SYNTHETIC DATABASE SETUP
+# -----------------------------------------------------------------------------
+DB_FILE = "plotly_analytics.db"
+engine = create_engine(f"sqlite:///{DB_FILE}")
 
-# ==============================================================================
-# 📊 TASK 1: CREATE TWO PLOTLY CHARTS WITH HOVER TOOLTIPS
-# ==============================================================================
+def setup_database():
+    """Generates realistic e-commerce order & product performance data."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
 
-def create_chart_1_revenue_trend(conn):
+    cursor.executescript("""
+    DROP TABLE IF EXISTS orders;
+    DROP TABLE IF EXISTS products;
+
+    CREATE TABLE products (
+        product_id INTEGER PRIMARY KEY,
+        product_name TEXT,
+        category TEXT,
+        base_price REAL,
+        cost_price REAL
+    );
+
+    CREATE TABLE orders (
+        order_id INTEGER PRIMARY KEY,
+        customer_id INTEGER,
+        product_id INTEGER,
+        order_date TEXT,
+        quantity INTEGER,
+        amount REAL,
+        profit REAL,
+        customer_segment TEXT
+    );
+    """)
+
+    # Seed products
+    products = [
+        (1, 'Enterprise Cloud Suite', 'Software', 1200.0, 350.0),
+        (2, 'Developer Pro Toolset', 'Software', 450.0, 120.0),
+        (3, 'AI Analytics Engine', 'AI/ML', 850.0, 220.0),
+        (4, 'Cybersecurity Shield', 'Security', 650.0, 180.0),
+        (5, 'Data Pipeline Connector', 'Data', 320.0, 80.0),
+        (6, 'Team Collaboration Hub', 'Software', 250.0, 60.0),
+        (7, 'API Gateway Sentinel', 'Infrastructure', 550.0, 140.0),
+        (8, 'Storage Optimizer', 'Infrastructure', 180.0, 45.0)
+    ]
+    cursor.executemany("INSERT INTO products VALUES (?, ?, ?, ?, ?)", products)
+
+    # Seed 5,000 orders over 90 days
+    np.random.seed(42)
+    start_date = pd.Timestamp("2026-06-01")
+    orders_data = []
+    segments = ['Enterprise', 'Mid-Market', 'SMB', 'Startup']
+    segment_weights = [0.35, 0.30, 0.20, 0.15]
+
+    for i in range(1, 5001):
+        rand_day = np.random.randint(0, 90)
+        order_dt = (start_date + pd.Timedelta(days=rand_day)).strftime('%Y-%m-%d')
+        prod = products[np.random.randint(0, len(products))]
+        qty = np.random.choice([1, 2, 3, 5, 10], p=[0.55, 0.25, 0.10, 0.07, 0.03])
+        amt = prod[3] * qty * np.random.uniform(0.92, 1.05) # slight discount/pricing variance
+        profit = amt - (prod[4] * qty)
+        seg = np.random.choice(segments, p=segment_weights)
+
+        orders_data.append((i, np.random.randint(101, 1500), prod[0], order_dt, qty, round(amt, 2), round(profit, 2), seg))
+
+    cursor.executemany("INSERT INTO orders VALUES (?, ?, ?, ?, ?, ?, ?, ?)", orders_data)
+    conn.commit()
+    conn.close()
+
+# -----------------------------------------------------------------------------
+# 2. TASK 1: CREATE TWO PLOTLY CHARTS WITH HOVER TOOLTIPS
+# -----------------------------------------------------------------------------
+def create_task1_chart1():
     """
-    Chart 1: Daily Revenue Trend with Custom Unified Hover Tooltip.
-    Displays formatted date, daily revenue, and completed order count.
+    Chart 1 - Daily Revenue Trend with Custom Unified Hover
+    - Unified hover template with date formatting
+    - Revenue in currency format ($)
+    - Order counts and 7-day rolling average
     """
-    print("Generating Chart 1: Daily Revenue Trend with Custom Hover...")
-    
-    query = """
-    SELECT 
-        DATE(order_date) AS date, 
-        SUM(order_amount) AS revenue, 
-        COUNT(*) AS order_count,
-        ROUND(AVG(order_amount), 2) AS avg_order_value
-    FROM orders
-    WHERE status = 'Completed'
-    GROUP BY DATE(order_date)
-    ORDER BY DATE(order_date);
-    """
-    df = pd.read_sql(query, conn)
-    df['custom_info'] = df.apply(
-        lambda r: f"Date: <b>{r['date']}</b><br>Daily Revenue: <b>${r['revenue']:,.2f}</b><br>Orders Placed: <b>{r['order_count']:,}</b><br>Avg Order Value: <b>${r['avg_order_value']:,.2f}</b>", 
-        axis=1
-    )
+    df = pd.read_sql("""
+        SELECT 
+            DATE(order_date) as date,
+            SUM(amount) as revenue,
+            COUNT(order_id) as order_count,
+            AVG(amount) as avg_order_value
+        FROM orders
+        GROUP BY DATE(order_date)
+        ORDER BY DATE(order_date)
+    """, engine)
+
+    # Calculate 7-day rolling average
+    df['rolling_revenue'] = df['revenue'].rolling(window=7, min_periods=1).mean()
 
     fig = go.Figure()
 
+    # Trace 1: Daily Revenue with Markers
     fig.add_trace(go.Scatter(
         x=df['date'],
         y=df['revenue'],
         mode='lines+markers',
         name='Daily Revenue',
+        hovertemplate='<b>%{x|%b %d, %Y}</b><br>' +
+                      'Daily Revenue: $%{y:,.2f}<br>' +
+                      'Completed Orders: %{customdata[0]:,}<br>' +
+                      'Avg Order Value: $%{customdata[1]:.2f}<extra></extra>',
         customdata=df[['order_count', 'avg_order_value']],
-        hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' +
-                      'Daily Revenue: <b>$%{y:,.2f}</b><br>' +
-                      'Completed Orders: <b>%{customdata[0]:,}</b><br>' +
-                      'Avg Order Value: <b>$%{customdata[1]:,.2f}</b><br>' +
-                      '<extra></extra>',
-        line=dict(color='#1f77b4', width=2.5),
-        marker=dict(size=6, color='#1f77b4', symbol='circle')
+        line=dict(color='#38bdf8', width=2.5),
+        marker=dict(size=6, color='#0284c7', symbol='circle')
     ))
 
-    # Add 7-day rolling average trendline
-    df['rolling_7d'] = df['revenue'].rolling(window=7, min_periods=1).mean()
+    # Trace 2: 7-Day Moving Average
     fig.add_trace(go.Scatter(
         x=df['date'],
-        y=df['rolling_7d'],
+        y=df['rolling_revenue'],
         mode='lines',
-        name='7-Day Moving Avg',
-        line=dict(color='#ff7f0e', width=2, dash='dot'),
-        hovertemplate='<b>7-Day Avg:</b> $%{y:,.2f}<extra></extra>'
+        name='7-Day Rolling Trend',
+        hovertemplate='7-Day Trend: $%{y:,.2f}<extra></extra>',
+        line=dict(color='#f59e0b', width=2, dash='dot')
     ))
 
     fig.update_layout(
         title=dict(
-            text='<b>Daily Revenue Trend with Custom Hover Tooltips</b><br><sup>Interactive time-series analysis (Fiscal Year 2024)</sup>',
-            font=dict(size=16)
+            text='<b>Daily Revenue Trend & Rolling Average</b><br><span style="font-size:12px;color:#94a3b8">Interactive time-series with unified hover tooltips</span>',
+            x=0.05,
+            xanchor='left'
         ),
         xaxis=dict(
-            title='Date',
+            title='Order Date',
+            gridcolor='#1e293b',
             showgrid=True,
-            gridcolor='#e1e4e8',
-            rangeslider=dict(visible=True)
+            rangeslider=dict(visible=True, thickness=0.08)
         ),
         yaxis=dict(
-            title='Revenue ($ USD)',
+            title='Total Revenue ($)',
+            gridcolor='#1e293b',
             showgrid=True,
-            gridcolor='#e1e4e8',
             tickprefix='$',
             tickformat=',.0f'
         ),
         hovermode='x unified',
-        hoverlabel=dict(bgcolor='white', font_size=12, font_family='sans-serif'),
-        plot_bgcolor='#fafbfc',
-        paper_bgcolor='#ffffff',
-        height=550,
+        template='plotly_dark',
+        height=520,
+        paper_bgcolor='#0f172a',
+        plot_bgcolor='#1e293b',
         legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
     )
 
-    # Save HTML to root and output directory
+    # Save outputs
     fig.write_html('chart1_revenue_trend.html')
     fig.write_html(os.path.join(OUTPUT_DIR, 'chart1_revenue_trend.html'))
-    print("✔ Chart 1 saved: chart1_revenue_trend.html")
+    fig.write_html('frontend/public/chart1_revenue_trend.html')
+    print("✅ Created Chart 1: chart1_revenue_trend.html")
     return fig
 
 
-def create_chart_2_product_performance(conn):
+def create_task1_chart2():
     """
-    Chart 2: Product Performance with Multi-Column Hover.
-    Displays Top 15 Products with 4 hover fields (Revenue, Order Count, AOV, Gross Margin %).
+    Chart 2 - Product Performance with Multi-Column Hover
+    - Horizontal ranked bar chart
+    - 5+ data fields in hover (Product, Category, Revenue, Orders, AOV, Gross Margin %)
     """
-    print("Generating Chart 2: Product Performance with Multi-Column Hover...")
+    df = pd.read_sql("""
+        SELECT 
+            p.product_name,
+            p.category,
+            SUM(o.amount) as total_revenue,
+            COUNT(o.order_id) as total_orders,
+            AVG(o.amount) as avg_order_value,
+            SUM(o.profit) as total_profit,
+            (SUM(o.profit) * 100.0 / SUM(o.amount)) as profit_margin_pct
+        FROM orders o
+        JOIN products p ON o.product_id = p.product_id
+        GROUP BY p.product_id, p.product_name, p.category
+        ORDER BY total_revenue ASC
+    """, engine)
 
-    query = """
-    SELECT 
-        p.product_name,
-        p.category,
-        ROUND(SUM(o.order_amount), 2) AS total_revenue,
-        COUNT(DISTINCT o.order_id) AS order_count,
-        ROUND(AVG(o.order_amount), 2) AS avg_order_value,
-        ROUND(SUM(o.order_amount - p.cost), 2) AS total_profit,
-        ROUND((SUM(o.order_amount - p.cost) / SUM(o.order_amount)) * 100.0, 2) AS gross_margin_pct
-    FROM products p
-    JOIN orders o ON p.product_id = o.product_id
-    WHERE o.status = 'Completed'
-    GROUP BY p.product_id, p.product_name, p.category
-    ORDER BY total_revenue DESC
-    LIMIT 15;
-    """
-    df = pd.read_sql(query, conn)
-    df = df.sort_values(by='total_revenue', ascending=True) # Ascending for horizontal bar
+    # Color scale by category
+    category_colors = {
+        'Software': '#38bdf8',
+        'AI/ML': '#a855f7',
+        'Security': '#10b981',
+        'Data': '#f59e0b',
+        'Infrastructure': '#ec4899'
+    }
+    bar_colors = [category_colors.get(c, '#64748b') for c in df['category']]
 
-    fig = go.Figure()
-
-    fig.add_trace(go.Bar(
-        y=df['product_name'],
+    fig = go.Figure(data=go.Bar(
         x=df['total_revenue'],
+        y=df['product_name'],
         orientation='h',
-        name='Product Revenue',
-        customdata=df[['category', 'order_count', 'avg_order_value', 'gross_margin_pct', 'total_profit']],
-        hovertemplate='<b>%{y}</b><br>' +
-                      'Category: <b>%{customdata[0]}</b><br>' +
-                      'Total Revenue: <b>$%{x:,.2f}</b><br>' +
-                      'Total Orders: <b>%{customdata[1]:,}</b><br>' +
-                      'Avg Order Value: <b>$%{customdata[2]:,.2f}</b><br>' +
-                      'Gross Profit: <b>$%{customdata[4]:,.2f}</b><br>' +
-                      'Profit Margin: <b>%{customdata[3]:.1f}%</b><br>' +
-                      '<extra></extra>',
         marker=dict(
-            color=df['total_revenue'],
-            colorscale='Blues',
-            showscale=True,
-            colorbar=dict(title='Revenue ($)', tickprefix='$', len=0.8)
+            color=bar_colors,
+            line=dict(color='#ffffff', width=1)
+        ),
+        customdata=df[['category', 'total_orders', 'avg_order_value', 'total_profit', 'profit_margin_pct']],
+        hovertemplate=(
+            '<b>%{y}</b><br>' +
+            'Category: %{customdata[0]}<br>' +
+            'Total Revenue: $%{x:,.2f}<br>' +
+            'Orders Count: %{customdata[1]:,}<br>' +
+            'Avg Order Value: $%{customdata[2]:,.2f}<br>' +
+            'Gross Profit: $%{customdata[3]:,.2f}<br>' +
+            'Profit Margin: %{customdata[4]:.1f}%<br>' +
+            '<extra></extra>'
         )
     ))
 
     fig.update_layout(
         title=dict(
-            text='<b>Top 15 Products by Revenue (Multi-Column Rich Hover)</b><br><sup>Hover over any bar to inspect Orders, AOV, Gross Profit, and Margin %</sup>',
-            font=dict(size=16)
+            text='<b>Product Performance Ranking</b><br><span style="font-size:12px;color:#94a3b8">Multi-column hover showing Revenue, Volume, AOV & Margin %</span>',
+            x=0.05,
+            xanchor='left'
         ),
         xaxis=dict(
-            title='Total Revenue ($ USD)',
-            showgrid=True,
-            gridcolor='#e1e4e8',
+            title='Total Revenue ($)',
+            gridcolor='#1e293b',
             tickprefix='$',
             tickformat=',.0f'
         ),
         yaxis=dict(
-            title='Product Name',
-            showgrid=False
+            title='',
+            gridcolor='#1e293b'
         ),
-        hoverlabel=dict(bgcolor='white', font_size=12, font_family='sans-serif'),
-        plot_bgcolor='#fafbfc',
-        paper_bgcolor='#ffffff',
-        height=600,
-        margin=dict(l=150, r=50, t=80, b=50)
-    )
-
-    fig.write_html('chart2_product_performance.html')
-    fig.write_html(os.path.join(OUTPUT_DIR, 'chart2_product_performance.html'))
-    print("✔ Chart 2 saved: chart2_product_performance.html")
-    return fig
-
-
-# ==============================================================================
-# 🔀 TASK 2: CREATE DROPDOWN FILTER TO TOGGLE VIEWS (NO RELOAD)
-# ==============================================================================
-
-def create_chart_3_metric_selector(conn):
-    """
-    Chart 3: Dropdown Menu to toggle between 3 metrics (Revenue, Profit, Order Count)
-    without page reload or re-querying the database.
-    """
-    print("Generating Chart 3: Metric Selector Dropdown Chart...")
-
-    query = """
-    SELECT 
-        p.category,
-        ROUND(SUM(o.order_amount), 2) AS revenue,
-        ROUND(SUM(o.order_amount - p.cost), 2) AS profit,
-        COUNT(DISTINCT o.order_id) AS order_count
-    FROM products p
-    JOIN orders o ON p.product_id = o.product_id
-    WHERE o.status = 'Completed'
-    GROUP BY p.category
-    ORDER BY revenue DESC;
-    """
-    df = pd.read_sql(query, conn)
-
-    fig = go.Figure()
-
-    # Trace 1: Revenue (Visible initially)
-    fig.add_trace(go.Bar(
-        x=df['category'],
-        y=df['revenue'],
-        name='Total Revenue',
-        marker=dict(color='#1f77b4'),
-        hovertemplate='<b>%{x}</b><br>Revenue: <b>$%{y:,.2f}</b><extra></extra>',
-        visible=True
-    ))
-
-    # Trace 2: Profit (Initially hidden)
-    fig.add_trace(go.Bar(
-        x=df['category'],
-        y=df['profit'],
-        name='Gross Profit',
-        marker=dict(color='#2ca02c'),
-        hovertemplate='<b>%{x}</b><br>Gross Profit: <b>$%{y:,.2f}</b><extra></extra>',
-        visible=False
-    ))
-
-    # Trace 3: Order Count (Initially hidden)
-    fig.add_trace(go.Bar(
-        x=df['category'],
-        y=df['order_count'],
-        name='Order Count',
-        marker=dict(color='#ff7f0e'),
-        hovertemplate='<b>%{x}</b><br>Completed Orders: <b>%{y:,}</b><extra></extra>',
-        visible=False
-    ))
-
-    # Define Dropdown Updatemenus
-    fig.update_layout(
-        updatemenus=[dict(
-            active=0,
-            x=0.0,
-            xanchor='left',
-            y=1.18,
-            yanchor='top',
-            bgcolor='#ffffff',
-            bordercolor='#cccccc',
-            borderwidth=1,
-            buttons=[
-                dict(
-                    label='📊 Total Revenue ($)',
-                    method='update',
-                    args=[
-                        {'visible': [True, False, False]},
-                        {
-                            'title': '<b>Product Category Performance: Total Revenue</b>',
-                            'yaxis': {'title': 'Revenue ($ USD)', 'tickprefix': '$', 'tickformat': ',.0f'}
-                        }
-                    ]
-                ),
-                dict(
-                    label='💰 Gross Profit ($)',
-                    method='update',
-                    args=[
-                        {'visible': [False, True, False]},
-                        {
-                            'title': '<b>Product Category Performance: Gross Profit</b>',
-                            'yaxis': {'title': 'Gross Profit ($ USD)', 'tickprefix': '$', 'tickformat': ',.0f'}
-                        }
-                    ]
-                ),
-                dict(
-                    label='📦 Order Volume (Count)',
-                    method='update',
-                    args=[
-                        {'visible': [False, False, True]},
-                        {
-                            'title': '<b>Product Category Performance: Completed Order Count</b>',
-                            'yaxis': {'title': 'Number of Orders', 'tickprefix': '', 'tickformat': ',.0f'}
-                        }
-                    ]
-                )
-            ]
-        )],
-        title=dict(
-            text='<b>Product Category Performance (Interactive Metric Selector)</b><br><sup>Select metric from dropdown to dynamically switch view without reloading</sup>',
-            font=dict(size=16)
-        ),
-        xaxis=dict(title='Product Category', showgrid=True, gridcolor='#e1e4e8'),
-        yaxis=dict(title='Revenue ($ USD)', tickprefix='$', tickformat=',.0f', showgrid=True, gridcolor='#e1e4e8'),
-        plot_bgcolor='#fafbfc',
-        paper_bgcolor='#ffffff',
-        height=550,
-        showlegend=False
-    )
-
-    fig.write_html('chart3_metric_selector.html')
-    fig.write_html(os.path.join(OUTPUT_DIR, 'chart3_metric_selector.html'))
-    print("✔ Chart 3 saved: chart3_metric_selector.html")
-    return fig
-
-
-# ==============================================================================
-# 🔍 TASK 3: ENABLE ZOOM, PAN, AND RESET INTERACTIONS
-# ==============================================================================
-
-def create_chart_4_interactive(conn):
-    """
-    Chart 4: Interactive Multi-Dimensional Scatter Plot with native Plotly interactions:
-    - Click-and-drag Zoom
-    - Shift-click Pan
-    - Double-click Reset
-    - Box / Lasso multi-point selection
-    """
-    print("Generating Chart 4: Interactive Scatter with Zoom/Pan/Lasso...")
-
-    query = """
-    SELECT 
-        o.order_id,
-        o.order_date,
-        o.order_amount,
-        p.product_name,
-        p.category,
-        p.price AS unit_price,
-        ROUND(o.order_amount - p.cost, 2) AS order_profit,
-        c.segment AS customer_segment
-    FROM orders o
-    JOIN products p ON o.product_id = p.product_id
-    JOIN customers c ON o.customer_id = c.customer_id
-    WHERE o.status = 'Completed'
-    LIMIT 1200;
-    """
-    df = pd.read_sql(query, conn)
-
-    fig = px.scatter(
-        df,
-        x='order_amount',
-        y='order_profit',
-        color='category',
-        size='order_amount',
-        hover_data=['order_id', 'product_name', 'customer_segment', 'order_date'],
-        color_discrete_sequence=['#1f77b4', '#ff7f0e', '#2ca02c', '#9467bd', '#d62728'],
-        title='<b>Multi-Dimensional Order Profitability (Interactive Explorer)</b><br><sup>Supports Click-Drag Zoom, Shift-Drag Pan, Box/Lasso Select, and Double-Click Reset</sup>'
-    )
-
-    # Configure native interaction controls
-    fig.update_layout(
-        dragmode='zoom', # default dragmode: 'zoom', 'pan', 'select', 'lasso'
-        hovermode='closest',
-        xaxis=dict(
-            title='Order Amount ($ USD)',
-            tickprefix='$',
-            tickformat=',.0f',
-            showgrid=True,
-            gridcolor='#e1e4e8'
-        ),
-        yaxis=dict(
-            title='Order Gross Profit ($ USD)',
-            tickprefix='$',
-            tickformat=',.0f',
-            showgrid=True,
-            gridcolor='#e1e4e8'
-        ),
-        plot_bgcolor='#fafbfc',
-        paper_bgcolor='#ffffff',
-        height=620,
-        legend=dict(title='Product Category', orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
-        modebar=dict(
-            add=['drawline', 'drawopenpath', 'eraseshape'],
-            orientation='v',
-            bgcolor='rgba(255,255,255,0.8)'
+        template='plotly_dark',
+        height=520,
+        paper_bgcolor='#0f172a',
+        plot_bgcolor='#1e293b',
+        hoverlabel=dict(
+            bgcolor='#1e293b',
+            font_size=13,
+            font_family='Inter, sans-serif'
         )
     )
 
-    fig.write_html('chart4_interactive.html')
-    fig.write_html(os.path.join(OUTPUT_DIR, 'chart4_interactive.html'))
-    print("✔ Chart 4 saved: chart4_interactive.html")
+    # Save outputs
+    fig.write_html('chart2_product_performance.html')
+    fig.write_html(os.path.join(OUTPUT_DIR, 'chart2_product_performance.html'))
+    fig.write_html('frontend/public/chart2_product_performance.html')
+    print("✅ Created Chart 2: chart2_product_performance.html")
     return fig
 
+# -----------------------------------------------------------------------------
+# 3. TASK 2: CREATE DROPDOWN FILTER TO TOGGLE VIEWS (UPDATEMENUS)
+# -----------------------------------------------------------------------------
+def create_task2_dropdown_chart():
+    """
+    Chart 3 - Product Performance with Dropdown Filter
+    - Client-side switcher between Revenue, Profit, and Order Count
+    - Zero page reload / Zero database roundtrip
+    """
+    df = pd.read_sql("""
+        SELECT 
+            p.product_name,
+            SUM(o.amount) as revenue,
+            SUM(o.profit) as profit,
+            COUNT(o.order_id) as order_count
+        FROM orders o
+        JOIN products p ON o.product_id = p.product_id
+        GROUP BY p.product_name
+        ORDER BY revenue DESC
+    """, engine)
 
-def main():
-    print("=" * 80)
-    print("STARTING ASSIGNMENT: INTERACTIVE PLOTLY CHART DESIGN")
-    print("=" * 80)
+    products = df['product_name'].tolist()
+    revenue_data = df['revenue'].tolist()
+    profit_data = df['profit'].tolist()
+    order_data = df['order_count'].tolist()
 
-    db_path = "data_layer.db"
-    if not os.path.exists(db_path):
-        from database.setup_data_layer import init_data_layer_db
-        print(f"Initializing {db_path}...")
-        init_data_layer_db(db_path)
+    fig = go.Figure()
 
-    conn = get_db_connection(db_path)
+    # Trace 0: Revenue (Default Visible)
+    fig.add_trace(go.Bar(
+        x=products,
+        y=revenue_data,
+        name='Revenue ($)',
+        marker=dict(color='#38bdf8'),
+        hovertemplate='<b>%{x}</b><br>Revenue: $%{y:,.2f}<extra></extra>',
+        visible=True
+    ))
 
-    # Execute all chart creation tasks
-    create_chart_1_revenue_trend(conn)
-    create_chart_2_product_performance(conn)
-    create_chart_3_metric_selector(conn)
-    create_chart_4_interactive(conn)
+    # Trace 1: Profit (Initially Hidden)
+    fig.add_trace(go.Bar(
+        x=products,
+        y=profit_data,
+        name='Gross Profit ($)',
+        marker=dict(color='#10b981'),
+        hovertemplate='<b>%{x}</b><br>Profit: $%{y:,.2f}<extra></extra>',
+        visible=False
+    ))
 
-    conn.close()
+    # Trace 2: Order Count (Initially Hidden)
+    fig.add_trace(go.Bar(
+        x=products,
+        y=order_data,
+        name='Order Volume (Count)',
+        marker=dict(color='#f59e0b'),
+        hovertemplate='<b>%{x}</b><br>Orders: %{y:,}<extra></extra>',
+        visible=False
+    ))
 
-    print("=" * 80)
-    print("ALL 4 PLOTLY CHARTS CREATED AND EXPORTED SUCCESSFULLY AS INTERACTIVE HTML!")
-    print(f"Exports available in workspace root and '{OUTPUT_DIR}/'")
-    print("=" * 80)
+    # Configure Dropdown updatemenus
+    fig.update_layout(
+        updatemenus=[
+            dict(
+                type="dropdown",
+                direction="down",
+                x=0.0,
+                xanchor="left",
+                y=1.18,
+                yanchor="top",
+                active=0,
+                bgcolor="#1e293b",
+                bordercolor="#475569",
+                font=dict(color="#ffffff", size=12),
+                buttons=[
+                    dict(
+                        label="💰 Metric: Total Revenue ($)",
+                        method="update",
+                        args=[
+                            {"visible": [True, False, False]},
+                            {"title": "<b>Product Performance — Total Revenue ($)</b>",
+                             "yaxis": {"title": "Revenue ($)", "tickprefix": "$", "tickformat": ",.0f", "gridcolor": "#1e293b"}}
+                        ]
+                    ),
+                    dict(
+                        label="📈 Metric: Gross Profit ($)",
+                        method="update",
+                        args=[
+                            {"visible": [False, True, False]},
+                            {"title": "<b>Product Performance — Gross Profit ($)</b>",
+                             "yaxis": {"title": "Gross Profit ($)", "tickprefix": "$", "tickformat": ",.0f", "gridcolor": "#1e293b"}}
+                        ]
+                    ),
+                    dict(
+                        label="📦 Metric: Order Volume (Count)",
+                        method="update",
+                        args=[
+                            {"visible": [False, False, True]},
+                            {"title": "<b>Product Performance — Order Volume (Count)</b>",
+                             "yaxis": {"title": "Completed Orders (Count)", "tickprefix": "", "tickformat": ",.0f", "gridcolor": "#1e293b"}}
+                        ]
+                    )
+                ]
+            )
+        ],
+        title=dict(
+            text='<b>Product Performance — Total Revenue ($)</b>',
+            x=0.28,
+            xanchor='left'
+        ),
+        xaxis=dict(title='Product Name', gridcolor='#1e293b', tickangle=-20),
+        yaxis=dict(title='Revenue ($)', gridcolor='#1e293b', tickprefix='$', tickformat=',.0f'),
+        template='plotly_dark',
+        height=540,
+        paper_bgcolor='#0f172a',
+        plot_bgcolor='#1e293b'
+    )
 
+    # Save outputs
+    fig.write_html('chart3_metric_selector.html')
+    fig.write_html(os.path.join(OUTPUT_DIR, 'chart3_metric_selector.html'))
+    fig.write_html('frontend/public/chart3_metric_selector.html')
+    print("✅ Created Chart 3: chart3_metric_selector.html")
+    return fig
+
+# -----------------------------------------------------------------------------
+# 4. TASK 3: ENABLE ZOOM, PAN, AND RESET INTERACTIONS
+# -----------------------------------------------------------------------------
+def create_task3_interactive_chart():
+    """
+    Chart 4 - Multi-Dimensional Order Explorer with Native Plotly Controls
+    - Zoom: Click and drag box
+    - Pan: Shift + Click + Drag
+    - Reset: Double-Click
+    - Box & Lasso Select: Isolate subsets
+    """
+    df = pd.read_sql("""
+        SELECT 
+            o.order_id,
+            o.order_date,
+            o.amount,
+            o.profit,
+            o.quantity,
+            o.customer_segment,
+            p.product_name,
+            p.category
+        FROM orders o
+        JOIN products p ON o.product_id = p.product_id
+        LIMIT 1000
+    """, engine)
+
+    color_map = {
+        'Enterprise': '#38bdf8',
+        'Mid-Market': '#10b981',
+        'SMB': '#f59e0b',
+        'Startup': '#ec4899'
+    }
+
+    df['quantity'] = pd.to_numeric(df['quantity'], errors='coerce').fillna(1)
+    df['amount'] = pd.to_numeric(df['amount'], errors='coerce').fillna(0.0)
+    df['profit'] = pd.to_numeric(df['profit'], errors='coerce').fillna(0.0)
+
+    fig = go.Figure()
+
+    for segment, seg_df in df.groupby('customer_segment'):
+        sizes = (seg_df['quantity'].astype(float) * 3.5 + 5.0).tolist()
+        fig.add_trace(go.Scatter(
+            x=seg_df['amount'],
+            y=seg_df['profit'],
+            mode='markers',
+            name=str(segment),
+            marker=dict(
+                size=sizes,
+                color=color_map.get(segment, '#94a3b8'),
+                opacity=0.85,
+                line=dict(width=1, color='#ffffff')
+            ),
+            customdata=seg_df[['product_name', 'category', 'quantity', 'order_date']],
+            hovertemplate=(
+                '<b>%{customdata[0]}</b> (%{customdata[1]})<br>' +
+                'Order Amount: $%{x:,.2f}<br>' +
+                'Gross Profit: $%{y:,.2f}<br>' +
+                'Quantity: %{customdata[2]}<br>' +
+                'Segment: ' + segment + '<br>' +
+                'Date: %{customdata[3]}<extra></extra>'
+            )
+        ))
+
+    fig.update_layout(
+        title=dict(
+            text='<b>Order Amount vs Profitability Explorer</b><br><span style="font-size:12px;color:#94a3b8">Interactive exploration with Zoom, Pan, Lasso Select, and Double-Click Reset</span>',
+            x=0.05,
+            xanchor='left'
+        ),
+        dragmode='zoom',
+        hovermode='closest',
+        xaxis=dict(title='Order Amount ($)', gridcolor='#1e293b', tickprefix='$'),
+        yaxis=dict(title='Gross Profit ($)', gridcolor='#1e293b', tickprefix='$'),
+        template='plotly_dark',
+        height=560,
+        paper_bgcolor='#0f172a',
+        plot_bgcolor='#1e293b',
+        legend=dict(title='Customer Segment', orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
+        modebar=dict(
+            bgcolor='#1e293b',
+            color='#94a3b8',
+            activecolor='#38bdf8'
+        )
+    )
+
+    # Save outputs
+    fig.write_html('chart4_interactive.html')
+    fig.write_html(os.path.join(OUTPUT_DIR, 'chart4_interactive.html'))
+    fig.write_html('frontend/public/chart4_interactive.html')
+    print("✅ Created Chart 4: chart4_interactive.html")
+    return fig
+
+# -----------------------------------------------------------------------------
+# 5. MASTER RUNNER & VALIDATION
+# -----------------------------------------------------------------------------
 if __name__ == "__main__":
-    main()
+    print("=" * 70)
+    print("GENERATING INTERACTIVE PLOTLY VISUALIZATIONS (TASKS 1 - 3)")
+    print("=" * 70)
+    setup_database()
+    create_task1_chart1()
+    create_task1_chart2()
+    create_task2_dropdown_chart()
+    create_task3_interactive_chart()
+    print("=" * 70)
+    print("🎉 ALL 4 PLOTLY CHARTS CREATED SUCCESSFULLY!")
+    print("Output Files:")
+    print("  1. chart1_revenue_trend.html (Daily Revenue with Unified Tooltip)")
+    print("  2. chart2_product_performance.html (Product Ranking with Multi-Column Hover)")
+    print("  3. chart3_metric_selector.html (Dropdown Metric Toggle - Zero Reload)")
+    print("  4. chart4_interactive.html (Zoom / Pan / Lasso / Reset Explorer)")
+    print("=" * 70)
