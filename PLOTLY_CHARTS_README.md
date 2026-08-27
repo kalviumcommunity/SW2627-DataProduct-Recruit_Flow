@@ -8,93 +8,93 @@ This directory contains the complete implementation, interactive HTML exports, a
 
 ```
 .
-├── chart1_revenue_trend.html          # Task 1: Daily Revenue Trend with Unified Hover
-├── chart2_product_performance.html    # Task 1: Product Performance with Multi-Column Rich Hover
-├── chart3_metric_selector.html        # Task 2: Instant Metric Dropdown Switcher (No Reload)
-├── chart4_interactive.html            # Task 3: Interactive Multi-Dimensional Scatter Explorer
+├── chart1_revenue_trend.html          # Task 1A: Daily Revenue Trend with Unified Hover & Rolling Average
+├── chart2_product_performance.html    # Task 1B: Product Performance Horizontal Bar with Multi-Column Tooltip
+├── chart3_metric_selector.html        # Task 2: Instant Metric Dropdown Switcher (Zero Page Reload)
+├── chart4_interactive.html            # Task 3: Interactive Multi-Dimensional Scatter Explorer (Zoom/Pan/Lasso)
 ├── assignment-36-plotly.py            # Complete automated generation & benchmarking script
-├── streamlit_plotly_app.py            # Task 4: Interactive Streamlit Dashboard with Reactive Filters
-├── output_plotly/                     # Mirrored high-resolution interactive HTML exports
-└── VIDEO_EXPLANATION_SCRIPT_PLOTLY.md # Word-for-word 3-5 minute video presentation script
+├── streamlit_plotly_app.py            # Task 4: Interactive Streamlit Dashboard embedding Plotly views
+└── output_plotly/                     # Mirrored high-resolution interactive HTML charts directory
 ```
 
 ---
 
-## 📊 Detailed Chart Specifications
+## 🎯 Task Breakdown & Technical Specifications
 
-### 1. Chart 1: Daily Revenue Trend with Unified Hover
+### Task 1: Create Two Plotly Charts with Hover Tooltips (1 Mark)
+
+#### 1. Chart 1 — Daily Revenue Trend with Unified Hover
 * **File:** [`chart1_revenue_trend.html`](file:///Users/fibafathima/Documents/Recruit%20flow/chart1_revenue_trend.html)
-* **Interaction Type:** Time-Series Line + Scatter with `hovermode='x unified'`.
-* **Hover Data Elements:**
-  * ISO Date (`%{x|%Y-%m-%d}`)
-  * Daily Revenue (`$%{y:,.2f}`)
-  * Completed Order Count (`%{customdata[0]:,}`)
-  * Average Order Value (`$%{customdata[1]:,.2f}`)
-  * 7-Day Rolling Moving Average Trendline.
-* **Interactive Feature:** Includes an interactive **Range Slider** below the X-axis for smooth temporal zooming.
+* **Design Strategy:**
+  * Uses `hovermode='x unified'` so hovering over any point displays the formatted date, daily revenue, completed order count, and average order value simultaneously.
+  * Formats currency amounts as `$%,.2f` and counts with thousands separators `%,d`.
+  * Embeds an interactive temporal range slider (`rangeslider=dict(visible=True)`) below the chart.
+  * Overlays a 7-day moving average dotted trendline in gold (`#f59e0b`).
 
----
-
-### 2. Chart 2: Product Performance with Multi-Column Rich Hover
+#### 2. Chart 2 — Product Performance with Multi-Column Hover
 * **File:** [`chart2_product_performance.html`](file:///Users/fibafathima/Documents/Recruit%20flow/chart2_product_performance.html)
-* **Interaction Type:** Horizontal Ranked Bar Chart with Color Scale gradient.
-* **Hover Data Elements:**
-  * Product Name (`%{y}`) & Category (`%{customdata[0]}`)
-  * Total Revenue (`$%{x:,.2f}`)
-  * Total Completed Orders (`%{customdata[1]:,}`)
-  * Average Order Value (`$%{customdata[2]:,.2f}`)
-  * Total Gross Profit (`$%{customdata[4]:,.2f}`)
-  * Gross Margin Percentage (`%{customdata[3]:.1f}%`)
+* **Design Strategy:**
+  * Horizontal ranked bar chart sorting products by revenue.
+  * Rich `hovertemplate` displaying 5+ data fields:
+    * Product Name (`%{y}`)
+    * Category (`%{customdata[0]}`)
+    * Total Revenue (`$%{x:,.2f}`)
+    * Total Orders (`%{customdata[1]:,}`)
+    * Average Order Value (`$%{customdata[2]:,.2f}`)
+    * Gross Profit (`$%{customdata[3]:,.2f}`)
+    * Gross Profit Margin Percentage (`%{customdata[4]:.1f}%`)
 
 ---
 
-### 3. Chart 3: Metric Selector Dropdown Filter (Zero Reload)
+### Task 2: Create Dropdown Filter to Toggle Views (1 Mark)
+
 * **File:** [`chart3_metric_selector.html`](file:///Users/fibafathima/Documents/Recruit%20flow/chart3_metric_selector.html)
-* **Interaction Type:** Dropdown Updatemenus modifying trace visibility client-side without re-querying the database.
-* **Dropdown Options:**
-  1. `📊 Total Revenue ($)`: Activates Revenue trace (`visible: [True, False, False]`).
-  2. `💰 Gross Profit ($)`: Activates Profit trace (`visible: [False, True, False]`).
-  3. `📦 Order Volume (Count)`: Activates Order Count trace (`visible: [False, False, True]`).
-* **Dynamic Layout:** Dropdown dynamically re-labels the Y-axis and title to match the active metric.
+* **Design Strategy:**
+  * Implemented using Plotly's client-side `updatemenus` dropdown feature.
+  * Pre-loads three traces (**Revenue**, **Gross Profit**, and **Order Count**) into the figure.
+  * Toggles the trace visibility array (`[True, False, False]`, `[False, True, False]`, `[False, False, True]`) and updates the Y-axis title and number formatting dynamically.
+  * **Zero Page Reload:** All metric switching happens entirely client-side in the browser without database roundtrips.
 
 ---
 
-### 4. Chart 4: Multi-Dimensional Order Explorer (Zoom / Pan / Lasso)
+### Task 3: Enable Zoom, Pan, Box/Lasso Select, and Reset (1 Mark)
+
 * **File:** [`chart4_interactive.html`](file:///Users/fibafathima/Documents/Recruit%20flow/chart4_interactive.html)
-* **Interaction Type:** Multi-Dimensional Scatter Plot with 5 data dimensions (X: Order Amount, Y: Order Profit, Color: Category, Size: Order Amount, Hover: Customer Segment, Order ID, Date).
-* **Native Interaction Modes Supported:**
-  * **Zoom:** Click and drag on any canvas area to zoom in.
-  * **Pan:** Shift + drag to pan horizontally and vertically.
-  * **Reset:** Double-click anywhere to reset to full extent.
-  * **Box / Lasso Selection:** Select arbitrary subsets of data points with persistent highlight.
+* **Design Strategy:**
+  * Multi-dimensional scatter plot comparing **Order Amount ($)** vs. **Gross Profit ($)** across customer segments (Enterprise, Mid-Market, SMB, Startup), with bubble sizes encoding quantity.
+  * Configured with `dragmode='zoom'`, `hovermode='closest'`, and Plotly modebar tools.
+  * **Interactions Supported:**
+    1. **Zoom:** Click and drag a bounding box over any coordinate region.
+    2. **Pan:** Hold `Shift` + click and drag to pan across axes.
+    3. **Reset:** Double-click anywhere on the canvas to restore full zoom extents.
+    4. **Box / Lasso Selection:** Select and isolate specific enterprise outlier clusters.
 
 ---
 
-## 💻 Task 4: Streamlit Reactive Dashboard Integration
+### Task 4: Integrate Plotly into Streamlit (1 Mark)
 
-The dashboard in [`streamlit_plotly_app.py`](file:///Users/fibafathima/Documents/Recruit%20flow/streamlit_plotly_app.py) embeds all four Plotly charts with bidirectional reactive filtering:
-
-### Features:
-1. **Sidebar Filter Widgets:**
-   * Dynamic Date Range Picker (`st.sidebar.date_input`)
-   * Product Category Multiselect (`st.sidebar.multiselect`)
-   * Customer Segment Multiselect (`st.sidebar.multiselect`)
-   * Min Order Amount Value Slider (`st.sidebar.slider`)
-2. **Executive KPI Cards:** Real-time updates for Total Revenue, Gross Profit, Total Orders, and Average Order Value.
-3. **Tabbed Navigation:** Seamlessly toggles between Daily Trends, Product Rankings, Dynamic Metric Switcher, and the Order Explorer.
-4. **Data Export:** Instant CSV download of the filtered dataset.
-
-### Launch Streamlit Dashboard:
-```bash
-streamlit run streamlit_plotly_app.py
-```
+* **File:** [`streamlit_plotly_app.py`](file:///Users/fibafathima/Documents/Recruit%20flow/streamlit_plotly_app.py)
+* **Features:**
+  * Embedded Plotly figures using `st.plotly_chart(fig, use_container_width=True)`.
+  * **Dynamic Sidebar Filters:**
+    * Date range picker (`st.sidebar.date_input`)
+    * Minimum order amount slider (`st.sidebar.slider`)
+    * Product category multi-select (`st.sidebar.multiselect`)
+    * Customer segment filter (`st.sidebar.multiselect`)
+  * **Dynamic KPI Summary Cards:** Total Revenue, Gross Profit, Total Orders, and Average Order Value.
+  * **Tabbed Navigation:** Clean switching between Revenue Trends, Product Performance, Metric Switcher, and Multi-Dimensional Explorer.
+  * **Data Export:** Filtered tabular preview with one-click CSV download.
 
 ---
 
-## 🛠️ Automated Standalone Generator
+## 🚀 Execution & Verification
 
-To re-generate all standalone interactive HTML charts:
+1. **Generate All 4 Standalone HTML Charts:**
+   ```bash
+   python3 assignment-36-plotly.py
+   ```
 
-```bash
-python3 assignment-36-plotly.py
-```
+2. **Run Interactive Streamlit Analytics Dashboard:**
+   ```bash
+   streamlit run streamlit_plotly_app.py
+   ```
