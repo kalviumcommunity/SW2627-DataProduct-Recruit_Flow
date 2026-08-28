@@ -1,21 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import './dashboard.css';
 import {
   Search, Bell, Download, Filter, Users, UserCheck, AlertTriangle, Clock,
   LayoutDashboard, Filter as FunnelIcon, Users as DeptIcon, HardDrive,
   Settings, HelpCircle, UploadCloud, ChevronDown, CheckCircle, XCircle,
   GitPullRequest, MessageSquare, AlertCircle, ArrowUpRight, ArrowDownRight,
-  Sparkles, X, ChevronRight, RefreshCw, FileText, Check
+  Sparkles, X, ChevronRight, RefreshCw, FileText, Check, ArrowRight
 } from 'lucide-react';
+import FunnelChart from '../../components/dashboard/FunnelChart';
+import PerformanceChart from '../../components/dashboard/PerformanceChart';
+import ReasonChart from '../../components/dashboard/ReasonChart';
+import BottleneckCard from '../../components/dashboard/BottleneckCard';
 
 export default function DashboardPage() {
   const [activeNav, setActiveNav] = useState('overview');
   const [selectedContributor, setSelectedContributor] = useState(null);
   const [reasonStage, setReasonStage] = useState('After Technical Round');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState('All Departments');
+  const [isDeptDropdownOpen, setIsDeptDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Live API States
+  const [funnelData, setFunnelData] = useState(null);
+  const [dropoffReasons, setDropoffReasons] = useState(null);
+  const [summaryData, setSummaryData] = useState(null);
+  const [journeyData, setJourneyData] = useState(null);
+  const [isApiLoading, setIsApiLoading] = useState(false);
 
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -23,6 +37,46 @@ export default function DashboardPage() {
     { id: 'departments', label: 'Departments', icon: DeptIcon },
     { id: 'intake', label: 'Data Intake', icon: HardDrive },
   ];
+
+  // Fetch live backend API analytics data
+  useEffect(() => {
+    async function fetchAnalytics() {
+      setIsApiLoading(true);
+      const deptQuery = selectedDepartment !== 'All Departments' ? `?department=${encodeURIComponent(selectedDepartment)}` : '';
+      
+      try {
+        const [funnelRes, reasonsRes, summaryRes, journeyRes] = await Promise.allSettled([
+          fetch(`http://localhost:8000/analytics/funnel${deptQuery}`),
+          fetch(`http://localhost:8000/analytics/dropoff-reasons?stage=${encodeURIComponent(reasonStage)}${selectedDepartment !== 'All Departments' ? `&department=${encodeURIComponent(selectedDepartment)}` : ''}`),
+          fetch(`http://localhost:8000/analytics/summary${deptQuery}`),
+          fetch(`http://localhost:8000/analytics/journey${deptQuery}`)
+        ]);
+
+        if (funnelRes.status === 'fulfilled' && funnelRes.value.ok) {
+          const json = await funnelRes.value.json();
+          setFunnelData(json);
+        }
+        if (reasonsRes.status === 'fulfilled' && reasonsRes.value.ok) {
+          const json = await reasonsRes.value.json();
+          setDropoffReasons(json);
+        }
+        if (summaryRes.status === 'fulfilled' && summaryRes.value.ok) {
+          const json = await summaryRes.value.json();
+          setSummaryData(json);
+        }
+        if (journeyRes.status === 'fulfilled' && journeyRes.value.ok) {
+          const json = await journeyRes.value.json();
+          setJourneyData(json);
+        }
+      } catch (err) {
+        console.warn('Backend API connection unavailable, displaying optimized offline data.', err);
+      } finally {
+        setIsApiLoading(false);
+      }
+    }
+
+    fetchAnalytics();
+  }, [selectedDepartment, reasonStage]);
 
   const contributorsData = [
     {
@@ -169,6 +223,13 @@ export default function DashboardPage() {
         </nav>
 
         <div className="px-3 pb-3 space-y-1">
+          <Link
+            href="/upload"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-[13px] font-medium text-[#38BDF8] hover:bg-[#18181B] hover:text-white transition-colors"
+          >
+            <UploadCloud className="w-4 h-4 shrink-0" />
+            Batch Upload Hub
+          </Link>
           <button className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-[13px] font-medium text-[#A1A1AA] hover:bg-[#18181B] hover:text-[#D4D4D8] transition-colors">
             <Settings className="w-4 h-4 shrink-0" />
             Settings
@@ -247,22 +308,13 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Alert Banner: Biggest Leak */}
-            <div className="flex items-center justify-between px-4 py-3 mb-6 rounded-md border border-[#7F1D1D] bg-[#2A0F12]">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5 text-[#FCA5A5] shrink-0" />
-                <div>
-                  <span className="text-[13px] font-bold text-[#FCA5A5] mr-2">Biggest leak: Interview Stage</span>
-                  <span className="text-[13px] text-[#FCA5A5] opacity-90">28.9% of candidates are lost here. Investigate interviewer feedback timelines.</span>
-                </div>
-              </div>
-              <button 
-                onClick={() => setActiveNav('funnel')}
-                className="text-[13px] font-semibold text-[#FCA5A5] hover:text-white transition-colors underline-offset-4 hover:underline shrink-0"
-              >
-                Investigate →
-              </button>
-            </div>
+            {/* Alert Banner: Bottleneck Card Component */}
+            <BottleneckCard
+              stage="Interview Stage"
+              percent={28.9}
+              description="28.9% of candidates are lost here. Investigate interviewer feedback timelines."
+              onInvestigate={() => setActiveNav('funnel')}
+            />
 
             {/* 4 KPI Cards Grid */}
             <div className="grid grid-cols-4 gap-4 mb-6">
@@ -311,7 +363,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Recruitment Funnel Section */}
+            {/* Recruitment Funnel Section using FunnelChart component */}
             <div className="card mb-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
@@ -325,62 +377,10 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="space-y-4">
-                {/* 1. Applications */}
-                <div>
-                  <div className="flex items-center justify-between text-[13px] mb-1.5">
-                    <span className="text-[#D4D4D8] font-medium">Applications</span>
-                    <span className="text-white font-bold">6,633</span>
-                  </div>
-                  <div className="h-[28px] bg-[#333338] rounded-r-md" style={{ width: '100%' }}></div>
-                  <div className="flex items-center gap-2 pl-3 pt-1">
-                    <span className="text-[11px] font-bold text-[#EAB308]">↓ -23%</span>
-                    <span className="text-[11px] text-[#71717A]">1,528 candidates lost</span>
-                  </div>
-                </div>
-
-                {/* 2. Screening */}
-                <div>
-                  <div className="flex items-center justify-between text-[13px] mb-1.5">
-                    <span className="text-[#D4D4D8] font-medium">Screening</span>
-                    <span className="text-white font-bold">5,105</span>
-                  </div>
-                  <div className="h-[28px] bg-[#333338] rounded-r-md" style={{ width: '77%' }}></div>
-                  <div className="flex items-center gap-2 pl-3 pt-1">
-                    <span className="text-[11px] font-bold text-[#EAB308]">↓ -18%</span>
-                    <span className="text-[11px] text-[#71717A]">919 candidates lost</span>
-                  </div>
-                </div>
-
-                {/* 3. Interview (BIGGEST LEAK) */}
-                <div>
-                  <div className="flex items-center justify-between text-[13px] mb-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[13px] font-bold text-[#FCA5A5]">Interview</span>
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#7F1D1D] text-[#FCA5A5] border border-[#991B1B]">BIGGEST LEAK</span>
-                    </div>
-                    <span className="text-white font-bold">4,186</span>
-                  </div>
-                  <div className="h-[28px] bg-[#EF4444] rounded-r-md border border-[#F87171]/40 shadow-lg shadow-red-950/40" style={{ width: '63%' }}></div>
-                  <div className="flex items-center gap-2 pl-3 pt-1">
-                    <span className="text-[11px] font-bold text-[#EF4444]">↓ -28.9%</span>
-                    <span className="text-[11px] text-[#71717A]">1,185 candidates lost</span>
-                  </div>
-                </div>
-
-                {/* 4. Technical Round */}
-                <div>
-                  <div className="flex items-center justify-between text-[13px] mb-1.5">
-                    <span className="text-[#D4D4D8] font-medium">Technical Round</span>
-                    <span className="text-white font-bold">3,001</span>
-                  </div>
-                  <div className="h-[28px] bg-[#333338] rounded-r-md" style={{ width: '46%' }}></div>
-                  <div className="flex items-center gap-2 pl-3 pt-1">
-                    <span className="text-[11px] font-bold text-[#22C55E]">↓ -15%</span>
-                    <span className="text-[11px] text-[#71717A]">458 candidates lost</span>
-                  </div>
-                </div>
-              </div>
+              <FunnelChart
+                stages={funnelData?.stages}
+                highlightStage="Interview"
+              />
             </div>
 
             {/* Two-column Comparison Grid */}
@@ -429,7 +429,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Drop-off Reasons */}
+              {/* Drop-off Reasons using ReasonChart Component */}
               <div className="card">
                 <div className="flex items-start justify-between mb-6">
                   <div>
@@ -459,40 +459,18 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                <div className="space-y-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-36 text-[12px] text-[#D4D4D8] truncate">Skill Mismatch</div>
-                    <div className="flex-1 h-[8px] bg-[#27272A] rounded-r-md overflow-hidden">
-                      <div className="h-full bg-[#FB7185] rounded-r-md" style={{ width: '82%' }}></div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-36 text-[12px] text-[#D4D4D8] truncate">Domain Knowledge</div>
-                    <div className="flex-1 h-[8px] bg-[#27272A] rounded-r-md overflow-hidden">
-                      <div className="h-full bg-[#FBBF24] rounded-r-md" style={{ width: '68%' }}></div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-36 text-[12px] text-[#D4D4D8] truncate">Candidate Withdrew</div>
-                    <div className="flex-1 h-[8px] bg-[#27272A] rounded-r-md overflow-hidden">
-                      <div className="h-full bg-[#94A3B8] rounded-r-md" style={{ width: '50%' }}></div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-36 text-[12px] text-[#D4D4D8] truncate">Salary Expectations</div>
-                    <div className="flex-1 h-[8px] bg-[#27272A] rounded-r-md overflow-hidden">
-                      <div className="h-full bg-[#64748B] rounded-r-md" style={{ width: '35%' }}></div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-md border border-[#27272A] bg-[#0E0E11] text-[12px] text-[#A1A1AA]">
-                  Top reason: <span className="text-white font-semibold">Technical skill mismatch</span> — 22.5% of 458 lost candidates.
-                </div>
+                <ReasonChart
+                  reasons={dropoffReasons?.reasons}
+                  topReasonText={
+                    <span>
+                      Top reason: <span className="text-white font-semibold">Technical skill mismatch</span> — 22.5% of 458 lost candidates.
+                    </span>
+                  }
+                />
               </div>
             </div>
 
-            {/* Data Intake Center */}
+            {/* Data Intake Center Teaser */}
             <div className="mb-4">
               <h3 className="text-[14px] font-bold text-white mb-3 tracking-tight">Data Intake Center</h3>
               <div 
@@ -575,52 +553,13 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Charts: PR Volume Over Time & Status Distribution */}
+            {/* Charts: PR Volume Over Time using PerformanceChart & Status Distribution */}
             <div className="grid grid-cols-2 gap-6">
-              {/* Line Area Chart */}
-              <div className="card">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-[14px] font-bold text-white">PR Volume Over Time</h3>
-                    <p className="text-[12px] text-[#A1A1AA] mt-0.5">Daily open vs merged pull requests</p>
-                  </div>
-                  <div className="flex items-center gap-3 text-[11px] text-[#D4D4D8]">
-                    <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#38BDF8]"></div>Opened</div>
-                    <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#22C55E]"></div>Merged</div>
-                  </div>
-                </div>
-
-                {/* SVG Visual Wave Graphic */}
-                <div className="h-[220px] w-full flex items-center justify-center pt-4">
-                  <svg viewBox="0 0 500 200" className="w-full h-full overflow-visible">
-                    <defs>
-                      <linearGradient id="openedGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.25"/>
-                        <stop offset="100%" stopColor="#38BDF8" stopOpacity="0.0"/>
-                      </linearGradient>
-                      <linearGradient id="mergedGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#22C55E" stopOpacity="0.25"/>
-                        <stop offset="100%" stopColor="#22C55E" stopOpacity="0.0"/>
-                      </linearGradient>
-                    </defs>
-                    {/* Grid lines */}
-                    <line x1="0" y1="50" x2="500" y2="50" stroke="#27272A" strokeDasharray="3 3" />
-                    <line x1="0" y1="110" x2="500" y2="110" stroke="#27272A" strokeDasharray="3 3" />
-                    <line x1="0" y1="170" x2="500" y2="170" stroke="#27272A" strokeDasharray="3 3" />
-
-                    {/* Opened Curve */}
-                    <path d="M 0 140 Q 70 80, 140 120 T 280 60 T 420 110 T 500 40 L 500 200 L 0 200 Z" fill="url(#openedGrad)" />
-                    <path d="M 0 140 Q 70 80, 140 120 T 280 60 T 420 110 T 500 40" fill="none" stroke="#38BDF8" strokeWidth="2.5" />
-
-                    {/* Merged Curve */}
-                    <path d="M 0 160 Q 80 140, 160 130 T 320 80 T 440 70 T 500 60 L 500 200 L 0 200 Z" fill="url(#mergedGrad)" />
-                    <path d="M 0 160 Q 80 140, 160 130 T 320 80 T 440 70 T 500 60" fill="none" stroke="#22C55E" strokeWidth="2.5" />
-                  </svg>
-                </div>
-                <div className="flex justify-between text-[10px] text-[#71717A] px-2 pt-2 border-t border-[#27272A]">
-                  <span>W1</span><span>W2</span><span>W3</span><span>W4</span>
-                </div>
-              </div>
+              {/* Performance Chart Component */}
+              <PerformanceChart
+                title="PR Volume Over Time"
+                subtitle="Daily open vs merged pull requests"
+              />
 
               {/* Status Distribution */}
               <div className="card">
@@ -744,11 +683,17 @@ export default function DashboardPage() {
                 <h1 className="text-xl font-bold text-white tracking-tight">Data Intake & Batch Management</h1>
                 <p className="text-[13px] text-[#A1A1AA] mt-1">Upload and manage recruitment datasets, parse logs, and trigger analytics pipelines.</p>
               </div>
+              <Link
+                href="/upload"
+                className="px-4 py-2 rounded-md bg-[#38BDF8] text-black text-xs font-bold hover:bg-[#7dd3fc] transition-colors"
+              >
+                Open Full Ingestion Studio →
+              </Link>
             </div>
 
             {/* Batch Options */}
             <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="card hover:border-[#38BDF8] transition-all cursor-pointer bg-[#141417]">
+              <Link href="/upload" className="card hover:border-[#38BDF8] transition-all cursor-pointer bg-[#141417] block">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 rounded-md bg-[#38BDF8]/15 flex items-center justify-center text-[#38BDF8]">
                     <Sparkles className="w-4 h-4" />
@@ -756,9 +701,9 @@ export default function DashboardPage() {
                   <h4 className="text-[14px] font-bold text-white">Create New Batch</h4>
                 </div>
                 <p className="text-[12px] text-[#A1A1AA]">Initialize a fresh isolated recruitment batch with automated schema validation.</p>
-              </div>
+              </Link>
 
-              <div className="card hover:border-[#22C55E] transition-all cursor-pointer bg-[#141417]">
+              <Link href="/upload" className="card hover:border-[#22C55E] transition-all cursor-pointer bg-[#141417] block">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 rounded-md bg-[#22C55E]/15 flex items-center justify-center text-[#22C55E]">
                     <RefreshCw className="w-4 h-4" />
@@ -766,9 +711,9 @@ export default function DashboardPage() {
                   <h4 className="text-[14px] font-bold text-white">Append to Batch</h4>
                 </div>
                 <p className="text-[12px] text-[#A1A1AA]">Add newly submitted candidate profiles and interview records to an active batch.</p>
-              </div>
+              </Link>
 
-              <div className="card hover:border-[#EF4444] transition-all cursor-pointer bg-[#141417]">
+              <Link href="/upload" className="card hover:border-[#EF4444] transition-all cursor-pointer bg-[#141417] block">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 rounded-md bg-[#EF4444]/15 flex items-center justify-center text-[#EF4444]">
                     <XCircle className="w-4 h-4" />
@@ -776,7 +721,7 @@ export default function DashboardPage() {
                   <h4 className="text-[14px] font-bold text-white">Clear / Reset Batch</h4>
                 </div>
                 <p className="text-[12px] text-[#A1A1AA]">Purge staging records and rebuild canonical candidate journey views.</p>
-              </div>
+              </Link>
             </div>
 
             {/* Drag and Drop Zone */}
@@ -786,9 +731,12 @@ export default function DashboardPage() {
                 <UploadCloud className="w-10 h-10 text-[#A1A1AA] mb-4" />
                 <p className="text-[14px] font-semibold text-white mb-1">Drag and drop CSV or Excel files here</p>
                 <p className="text-[12px] text-[#71717A] mb-5">Supported files: candidates.csv, interviews.csv, offers.csv, onboarding.csv</p>
-                <button className="px-5 py-2.5 rounded-md bg-white text-black text-[13px] font-semibold hover:bg-gray-200 transition-colors shadow">
-                  Browse Files
-                </button>
+                <Link
+                  href="/upload"
+                  className="px-5 py-2.5 rounded-md bg-white text-black text-[13px] font-semibold hover:bg-gray-200 transition-colors shadow"
+                >
+                  Browse Files & Ingest Batch
+                </Link>
               </div>
             </div>
           </div>
