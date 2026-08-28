@@ -22,7 +22,7 @@ from app.auth import get_password_hash, verify_password, create_access_token, ge
 
 # backend/app/main.py
 from fastapi import FastAPI
-from app.api import analytics_routes, upload_routes
+from app.api import analytics_routes, upload_routes, batch_routes
 
 # Initialize the FastAPI application
 app = FastAPI(
@@ -38,9 +38,10 @@ try:
 except Exception as e:
     print(f"Warning: Could not create tables at startup. Database might be unreachable: {e}")
 
-# Include teammates' upload/ingestion router
+# Include routers
 app.include_router(upload_routes.router)
 app.include_router(analytics_routes.router)
+app.include_router(batch_routes.router)
 
 # Root endpoint to verify if the server is running
 @app.get("/")
@@ -68,6 +69,7 @@ def health_check(db: Session = Depends(get_db)):
 
 # 1. User Signup Route
 @app.post("/signup", response_model=schemas.UserOut, status_code=status.HTTP_201_CREATED)
+@app.post("/api/auth/signup", response_model=schemas.UserOut, status_code=status.HTTP_201_CREATED)
 def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     # Check if a user with the same email already exists
     existing_user = db.query(models.User).filter(models.User.email == user_in.email).first()
@@ -96,6 +98,7 @@ def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
 
 # 2. User Login Route
 @app.post("/login", response_model=schemas.Token)
+@app.post("/api/auth/login", response_model=schemas.Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     # Query database for the user by email
     user = db.query(models.User).filter(models.User.email == form_data.username).first()
