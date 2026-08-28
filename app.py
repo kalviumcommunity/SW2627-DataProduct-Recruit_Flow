@@ -74,46 +74,68 @@ elif page == "Trends":
 elif page == "Data Explorer":
     st.title("Data Explorer")
 
-    st.header("Data Filters")
-    st.subheader("Query Configuration")
-    f_col1, f_col2, f_col3 = st.columns(3)
-    with f_col1:
-        st.selectbox("Timeframe", ["Last 7 Days", "Last 30 Days", "Last 90 Days", "Year to Date"])
-    with f_col2:
-        st.selectbox("Segment", ["All Segments", "Enterprise", "Mid-Market", "SMB"])
-    with f_col3:
-        st.selectbox("Region", ["Global", "North America", "Europe", "Asia-Pacific"])
+    uploaded_file = st.file_uploader("Upload your dataset", type=["csv", "json"])
 
-    with st.expander("Filter Options & Query Logic"):
-        st.write("Filters apply dynamically across all backend metric views and export queries.")
+    if uploaded_file is not None:
+        try:
+            if uploaded_file.name.endswith(".csv"):
+                df = pd.read_csv(uploaded_file)
+            elif uploaded_file.name.endswith(".json"):
+                df = pd.read_json(uploaded_file)
+            else:
+                st.error("Unsupported file type.")
+                st.stop()
 
-    st.divider()
+            if len(df) == 0:
+                st.warning("Uploaded file is empty.")
+                st.stop()
+        except Exception:
+            st.error("Could not read this file. Check the format and try again.")
+            st.stop()
 
-    st.header("Data Records")
-    st.subheader("Metric Summary Table & Export")
-    d_col1, d_col2 = st.columns([3, 1])
-    sample_df = pd.DataFrame({
-        "Date": ["2026-08-01", "2026-08-02", "2026-08-03", "2026-08-04", "2026-08-05"],
-        "Metric": ["Revenue", "Users", "AOV", "Churn", "NPS"],
-        "Value": ["$5.2M", "2,500", "$45", "5.2%", "72"],
-        "Status": ["On Track", "Growing", "Stable", "Optimal", "High"]
-    })
-    with d_col1:
-        st.dataframe(sample_df, use_container_width=True)
-    with d_col2:
-        st.write("**Export Options**")
-        st.download_button(
-            label="📥 Export as CSV",
-            data=sample_df.to_csv(index=False),
-            file_name="analytics_data.csv",
-            mime="text/csv"
-        )
-        st.download_button(
-            label="📥 Export as JSON",
-            data=sample_df.to_json(orient="records"),
-            file_name="analytics_data.json",
-            mime="application/json"
-        )
+        st.success("Loaded: " + uploaded_file.name
+                   + " (" + str(len(df)) + " rows, "
+                   + str(len(df.columns)) + " columns)")
 
-    with st.expander("Data Schema & Field Descriptions"):
-        st.write("Date: Event record date | Metric: KPI name | Value: Current measurement | Status: Health benchmark.")
+        st.header("Dataset Preview")
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Rows", f"{len(df):,}")
+        with col2:
+            st.metric("Columns", str(len(df.columns)))
+        with col3:
+            null_pct = (df.isnull().sum().sum()
+                        / (df.shape[0] * df.shape[1]) * 100) if (df.shape[0] * df.shape[1]) > 0 else 0.0
+            st.metric("Null %", f"{null_pct:.1f}%")
+
+        st.subheader("First 10 Rows")
+        st.dataframe(df.head(10), use_container_width=True)
+
+        st.subheader("Column Summary")
+        summary = pd.DataFrame({
+            "Column": df.columns,
+            "Type": df.dtypes.astype(str).values,
+            "Non-Null": df.notnull().sum().values,
+            "Null Count": df.isnull().sum().values,
+            "Null %": (df.isnull().sum() / len(df) * 100).round(1).values
+        })
+        st.dataframe(summary, use_container_width=True)
+
+        st.subheader("Descriptive Statistics")
+        st.dataframe(df.describe(), use_container_width=True)
+
+        # Simple demonstration of downstream usage
+        st.subheader("Quick Exploration")
+        numeric_cols = df.select_dtypes(include="number").columns.tolist()
+        if numeric_cols:
+            selected_col = st.selectbox("Select a column to visualise", numeric_cols)
+            st.bar_chart(df[selected_col].value_counts().head(20))
+        else:
+            st.info("No numeric columns available for visualization.")
+
+        with st.expander("About Dataset Processing"):
+            st.write("Uploaded datasets are parsed directly in memory. Data preview, column summary, null metrics, and descriptive statistics are automatically generated.")
+
+    else:
+        st.info("Upload a CSV or JSON file to begin.")
