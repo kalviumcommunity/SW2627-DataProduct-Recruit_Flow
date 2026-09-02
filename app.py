@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from alert_config import ALERT_THRESHOLDS
+
 st.set_page_config(page_title="Real-Time KPI & Workflow Analytics", layout="wide")
 
 # ==========================================
@@ -21,13 +23,14 @@ def get_default_data():
             rev = base + (i % 15) * 250 + (len(seg) * 50)
             users = int(rev / 45)
             customer_id = f"CUST-{(i % 50) + 100}"
+            churn_val = 3.5 if seg == "Enterprise" else (5.8 if seg == "Mid-Market" else 8.5)
             records.append({
                 "date": d,
                 "segment": seg,
                 "revenue": float(rev),
                 "users": users,
                 "customer_id": customer_id,
-                "churn": 5.2,
+                "churn": churn_val,
                 "nps": 72
             })
     return pd.DataFrame(records)
@@ -179,6 +182,38 @@ if len(filtered_df) == 0:
 if page == "KPI Dashboard":
     st.title("Real-Time KPI Dashboard")
     st.caption("Live business metrics and interactive visualisations updating reactively with filters.")
+
+    # ==========================================
+    # Threshold Monitoring & Visual Alerts (Tasks 1-5)
+    # ==========================================
+    total_cells = filtered_df.shape[0] * filtered_df.shape[1] if len(filtered_df) > 0 else 0
+    churn_val = float(filtered_df["churn"].mean()) if "churn" in filtered_df.columns else (float(filtered_df["churn_rate"].mean()) if "churn_rate" in filtered_df.columns else 0.0)
+    aov_val = float(filtered_df["revenue"].mean()) if "revenue" in filtered_df.columns else (float(filtered_df["avg_order_value"].mean()) if "avg_order_value" in filtered_df.columns else 0.0)
+    null_val = float(filtered_df["null_percentage"].mean()) if "null_percentage" in filtered_df.columns else ((filtered_df.isnull().sum().sum() / total_cells * 100.0) if total_cells > 0 else 0.0)
+
+    current_metrics = {
+        "churn_rate": churn_val,
+        "avg_order_value": aov_val,
+        "null_percentage": null_val
+    }
+
+    for key, config in ALERT_THRESHOLDS.items():
+        value = current_metrics.get(key, 0)
+        breached = False
+        if config["direction"] == "above" and value > config["threshold"]:
+            breached = True
+        elif config["direction"] == "below" and value < config["threshold"]:
+            breached = True
+
+        if breached:
+            alert_text = ("ALERT: " + config["metric"]
+                          + " is " + str(round(value, 1))
+                          + " (threshold: " + str(config["threshold"]) + "). "
+                          + config["message"])
+            if config["severity"] == "critical":
+                st.error(alert_text)
+            else:
+                st.warning(alert_text)
 
     # Task 1 (2.55): Five Reactive KPI Metrics from filtered_df
     total_revenue = filtered_df["revenue"].sum() if "revenue" in filtered_df.columns else 0.0
