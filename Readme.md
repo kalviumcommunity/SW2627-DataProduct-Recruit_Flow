@@ -1,239 +1,128 @@
-# 🎯 RecruitFlow - HR Recruitment Intelligence Platform
+# Sales Analytics & RecruitFlow Dashboard
 
-> An enterprise HR analytics and recruitment intelligence platform that consolidates multi-source hiring data into a unified data layer and transforms it into actionable funnel insights.
-
----
-
-## 📌 1. The Core Problem Statement
-
-HR teams have recruitment funnel data, interview feedback, and onboarding records, but **no shared reporting system** identifies which hiring stages contribute most to candidate drop-offs across departments.
-
-### Why This Is a Critical Problem
-The problem is **not that data doesn't exist**—the problem is that it lives in **disconnected silos**:
-* **Recruitment / ATS:** Tracks candidate details, application dates, departments, and basic status.
-* **Interview Records:** Tracks technical scores, communication scores, recommendations, and rejection reasons.
-* **Onboarding / HRIS:** Tracks offer acceptance, joining dates, actual join status, and dropouts.
-
-Without connecting these systems into a single candidate journey, company-wide averages mask deep, department-specific bottlenecks:
-* An overall **20% interview drop-off** might hide a **45% failure rate in IT technical rounds** (due to mismatch in assessment level) vs. a **30% loss in Sales at the offer stage** (due to compensation expectations).
+Interactive analytics dashboard that ingests sales data, computes KPIs, detects threshold breaches, and delivers weekly reports. Built for operations, HR, and sales teams.
 
 ---
 
-## 💡 2. The Solution & Value Proposition
+## Getting Started
 
-**RecruitFlow** acts as a centralized **Talent Command Center** that:
-1. **Unifies Multi-Source HR Data:** Ingests and standardizes records across 5 core datasets using `candidate_id` as the canonical join key.
-2. **Reconstructs Candidate Journeys:** Maps the chronological progression from initial application through interviews, offers, and verified onboarding.
-3. **Identifies Stage Bottlenecks:** Calculates stage-to-stage conversion rates, drop-off percentages, and time-in-stage delays.
-4. **Uncovers the "Why":** Correlates drop-offs with structured exit reasons (Technical Skill Mismatch, Salary Expectations, Process Delay, Candidate Withdrew).
-5. **Enables Department & Role Drill-Down:** Allows HR leaders to filter by department, job role, and date range in sub-second queries.
-6. **Passes the "30-Second Test":** Enables any stakeholder to identify the single biggest hiring bottleneck and its root cause within 30 seconds.
-
----
-
-## 🏗️ 3. Architecture & Technology Stack
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           Next.js Web Frontend                          │
-│        (Next.js 14 App Router, React 18, Tailwind CSS, Lucide React)    │
-│           • /dashboard  (KPIs, Funnel, Department & Reason Charts)      │
-│           • /upload     (Batch Selection: New, Append, Clear + DnD)     │
-│           • /login & /signup (HR Authentication)                        │
-└────────────────────────────────────┬────────────────────────────────────┘
-                                     │ REST API (JSON / JWT)
-┌────────────────────────────────────▼────────────────────────────────────┐
-│                           FastAPI Backend                               │
-│           (Python 3.11+, Pydantic v2, SQLAlchemy 2.0, Pandas)           │
-│           • Auth Service (bcrypt hashing, JWT tokens)                   │
-│           • Batch Management API (New, Append, Clear)                   │
-│           • Ingestion & Normalization Layer (Validation & Cleaning)     │
-│           • Journey Reconstruction & Funnel Analytics Engine            │
-└────────────────────────────────────┬────────────────────────────────────┘
-                                     │ SQL (psycopg2 / SQLAlchemy)
-┌────────────────────────────────────▼────────────────────────────────────┐
-│                         PostgreSQL Data Store                           │
-│           • staging schema (tolerant ingestion & audit lineage)         │
-│           • core schema (canonical deduplicated truth)                  │
-│           • analytical views (v_candidate_journey, funnel rollups)      │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 📊 4. Canonical Data Model & Ingestion Datasets
-
-RecruitFlow links 5 primary entity datasets and 2 reference master tables via `candidate_id`:
-
-```
-                    ┌─────────────────────────┐
-                    │     candidates.csv      │
-                    │      (Master Profile)   │
-                    └────────────┬────────────┘
-                                 │ candidate_id
-        ┌────────────────────────┼────────────────────────┐
-        ↓                        ↓                        ↓
-┌───────────────────────┐ ┌─────────────┐ ┌───────────────────────┐
-│ recruitment_stages.csv│ │interviews.csv│ │      offers.csv       │
-│     (Funnel Events)   │ │  (Feedback) │ │   (Offer & Comp)      │
-└───────────┬───────────┘ └──────┬──────┘ └───────────┬───────────┘
-            └────────────────────┼────────────────────┘
-                                 ↓ candidate_id
-                        ┌─────────────────┐
-                        │ onboarding.csv  │
-                        │ (Join Outcome)  │
-                        └─────────────────┘
-```
-
-### The 5 Core Datasets & Master References
-
-| Dataset | Key Columns | Business Purpose |
-| :--- | :--- | :--- |
-| **`candidates.csv`** | `candidate_id`, `department`, `job_role`, `location`, `experience_level`, `application_date`, `source` | Master profile establishing hiring context. |
-| **`recruitment_stages.csv`** | `candidate_id`, `stage`, `entered_at`, `exited_at`, `status`, `exit_reason` | Temporal tracking of candidate movement through stages. |
-| **`interviews.csv`** | `interview_id`, `candidate_id`, `interview_stage`, `score`, `recommendation`, `feedback`, `rejection_reason` | Assessment scores and specific interviewer feedback. |
-| **`offers.csv`** | `offer_id`, `candidate_id`, `offer_date`, `offered_role`, `offered_salary`, `offer_status`, `acceptance_date` | Compensation package tracking and offer acceptance rates. |
-| **`onboarding.csv`** | `candidate_id`, `planned_joining_date`, `actual_joining_date`, `joining_status`, `onboarding_status` | Verifies whether accepted offers converted into actual joiners. |
-| **`stage_master.csv`** | `stage_code`, `stage_name`, `stage_order` (1: Applied → 8: Joined) | Standardizes stage sequence and aliases across ATS sources. |
-| **`reason_master.csv`**| `reason_code`, `reason_category` (Tech Mismatch, Salary, Role Mismatch, Withdrawal, Delay) | Normalizes rejection reasons into structured categories. |
-
----
-
-## 📈 5. The Hiring Funnel Pipeline
-
-```text
-  [1] Application (10,000)
-         ↓  (20% drop)
-  [2] Screening (8,000)
-         ↓  (15% drop)
-  [3] Interview (6,800)
-         ↓  (45% drop 🔴 Technical Bottleneck in IT)
-  [4] Technical / Department Round (3,740)
-         ↓  (15% drop)
-  [5] HR Round (3,179)
-         ↓  (30% drop 🟠 Offer Bottleneck in Sales)
-  [6] Offer Extended (2,225)
-         ↓  (15% drop)
-  [7] Offer Accepted (1,891)
-         ↓  (10% drop / no-shows)
-  [8] Joined & Onboarded (1,702)
-```
-
----
-
-## 📁 6. Repository Structure
-
-```
-.
-├── backend/
-│   ├── app/
-│   │   ├── api/                 # FastAPI routes (auth, batches, ingestion, analytics)
-│   │   ├── core/                # Database configuration & settings
-│   │   ├── schemas/             # Pydantic validation schemas
-│   │   ├── services/            # Ingestion, validation, journey reconstruction & analytics
-│   │   └── main.py              # Application entry point
-│   ├── migrations/              # PostgreSQL DDL migrations (001 to 007)
-│   ├── scripts/                 # Synthetic data generation & scale datasets
-│   ├── Dockerfile               # Backend container configuration
-│   └── requirements.txt         # Python dependencies
-├── frontend/
-│   ├── app/                     # Next.js 14 App Router
-│   │   ├── dashboard/           # Analytics command center & visual funnel
-│   │   ├── upload/              # Batch management & file ingestion UI
-│   │   ├── login/               # HR Authentication
-│   │   ├── signup/              # Account registration
-│   │   ├── globals.css          # Tailwind styling
-│   │   └── layout.jsx           # Root layout wrapper
-│   ├── components/              # Modular UI, Dashboard & Upload dropzone components
-│   ├── src/                     # Shared components, analytics utils & mock data
-│   ├── lib/                     # Client helper libraries
-│   ├── package.json             # Node dependencies
-│   ├── tailwind.config.js       # Design tokens & dark mode configuration
-│   └── postcss.config.js        # PostCSS configuration
-├── docs/
-│   └── data-model.md            # Canonical data model specification
-├── docker-compose.yml           # Multi-container orchestration (DB + API + Web)
-├── expected_results.json        # Test validation benchmarks
-├── .env.example                 # Environment configuration template
-├── .gitignore                   # Git exclusion rules
-└── Readme.md                    # Canonical project documentation
-```
-
----
-
-## ⚡ 7. Running the Project Locally
-
-### Option A: Using Docker Compose (Recommended)
+Run the project in 4 simple commands:
 
 ```bash
-# 1. Clone repository
 git clone https://github.com/kalviumcommunity/SW2627-DataProduct-Recruit_Flow.git
 cd SW2627-DataProduct-Recruit_Flow
-
-# 2. Setup environment variables
-cp .env.example .env
-
-# 3. Start PostgreSQL, FastAPI Backend, and Next.js Frontend
-docker-compose up --build
-```
-* **Frontend Web Dashboard:** `http://localhost:3000`
-* **FastAPI Interactive Docs (Swagger):** `http://localhost:8000/docs`
-* **PostgreSQL Database:** `localhost:5432`
-
----
-
-### Option B: Running Services Individually
-
-#### 1. Backend Service
-```bash
-cd backend
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-
-# Configure environment
-export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/recruitflow"
-export SECRET_KEY="your-secret-key"
-
-# Initialize Database & Start Server
-python create_db.py
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+streamlit run app.py
 ```
-
-#### 2. Frontend Application
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Open **`http://localhost:3000`** in your browser.
 
 ---
 
-## 🌐 8. Core API Endpoints
+## Dataset
 
-### 🔐 Authentication
-* `POST /api/auth/signup`: Register a new HR user.
-* `POST /api/auth/login`: Authenticate and receive a JWT bearer token.
-
-### 📦 Batch Management
-* `GET /api/batches`: List all uploaded recruitment batches.
-* `POST /api/batches/new`: Create a new isolated batch for fresh data.
-* `POST /api/batches/{id}/append`: Append incremental data to an existing batch.
-* `DELETE /api/batches/{id}`: Purge a batch and reset associated analytics.
-
-### 📊 Analytics & Insights
-* `GET /api/v1/analytics/funnel`: Aggregate funnel conversion and stage drop-offs.
-* `GET /api/v1/analytics/bottlenecks`: Average and median days spent per stage.
-* `GET /api/v1/analytics/dropoff-reasons`: Top rejection/exit reasons grouped by stage and department.
-* `GET /api/v1/analytics/department-comparison`: Comparative metrics across IT, Sales, Finance, etc.
+- **Source**: CSV upload or scheduled pipeline ingestion
+- **Columns**: `customer_id`, `order_id`, `amount`, `date`, `segment` (also supports `revenue`, `churn`, `nps` columns)
+- **Refresh**: Weekly via GitHub Actions pipeline
 
 ---
 
-## 👥 9. Team Collaboration & Milestone Ownership
+## Setup
 
-| Teammate | Focus Area | Key Deliverables |
-| :--- | :--- | :--- |
-| **Teammate A** | **Data & Ingestion** | Schema Design, Migrations, Sample Datasets, CSV/Excel Upload, Validation & Normalization Layer, Journey Join Logic. |
-| **Teammate B** | **Backend & Analytics** | FastAPI Scaffold, Journey Query Service, Funnel Metrics Engine, Time-at-Stage, Filter APIs, Reason Aggregation, Auth. |
-| **Teammate C** | **Frontend & Dashboard** | Next.js Dashboard UI, Visual Funnel Charts, Filter Controls, Batch Upload UI, 30-Second MVP Validation, Polish. |
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/kalviumcommunity/SW2627-DataProduct-Recruit_Flow.git
+   cd SW2627-DataProduct-Recruit_Flow
+   ```
+
+2. **Create virtual environment**
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # Windows: venv\Scripts\activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your SMTP credentials
+   ```
+
+5. **Run the app**
+   ```bash
+   streamlit run app.py
+   ```
+
+---
+
+## Usage
+
+- Upload a CSV file via the sidebar or let the automated pipeline load data automatically.
+- Use sidebar filters (Date Range, Segments, Revenue Range) to explore metrics.
+- Check real-time KPI cards for status overview.
+- Review visual alerts (`st.error` / `st.warning`) for threshold breaches.
+- Generate structured summary reports and send them via email.
+
+---
+
+## Pipeline Architecture
+
+```text
+CSV Upload / Scheduled Ingest
+        |
+    Ingestion: Load raw CSV, validate file format
+        |
+    Cleaning: Drop nulls, cast types, filter invalid rows
+        |
+    Aggregation: Group by segment, compute revenue and order count
+        |
+    Output: Write cleaned.csv and aggregated.csv to output/
+        |
+    Dashboard: Load processed data, compute KPIs, render charts
+        |
+    Alerts: Check metrics against thresholds, display warnings
+        |
+    Reports: Generate summary, send via email
+```
+
+---
+
+## Derived Features
+
+| Column           | Type    | Description                          | Example  |
+|------------------|---------|--------------------------------------|----------|
+| `revenue_30d`      | float   | Sum of order amounts last 30 days    | 4523.50  |
+| `days_since_order` | integer | Days since most recent order         | 12       |
+| `churn_risk`       | string  | Risk category based on activity      | "high"   |
+| `null_pct`         | float   | Percentage of null values per column | 2.3      |
+
+---
+
+## Known Limitations
+
+- Data refreshes weekly. Dashboard does not show real-time streaming data.
+- Revenue excludes refunded orders.
+- Segment classification based on self-reported category field.
+- Alert thresholds are static (no seasonal adjustment).
+- Email delivery requires SMTP configuration in `.env` file.
+- Pipeline assumes CSV with specific column names (`customer_id`, `order_id`, `amount`, `date`, `segment`).
+
+---
+
+## 🏗️ Project Components & Architecture
+
+### Streamlit & Python Data Pipeline
+- `app.py`: Main interactive Streamlit application (KPI dashboard, multi-step workflow, charts, explorer, and email report UI).
+- `pipeline.py`: Automated ingestion, cleaning, aggregation, and output pipeline.
+- `alert_config.py`: Threshold configuration dictionary for business metrics monitoring.
+- `report_generator.py`: Generates structured text summary reports.
+- `email_sender.py`: Delivers summary reports via SMTP with non-blocking error handling.
+- `validate_data.py`: Data quality and schema validation script.
+- `.github/workflows/pipeline.yml`: GitHub Actions schedule for weekly pipeline execution.
+- `.github/workflows/validate.yml`: GitHub Actions CI workflow for data schema validation on push/PR.
+
+### Enterprise Web Application (FastAPI & Next.js)
+- `backend/`: FastAPI backend with SQLAlchemy, Pydantic schemas, and analytics engine.
+- `frontend/`: Next.js 14 App Router frontend with Tailwind CSS and interactive dashboard components.
