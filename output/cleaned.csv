@@ -1,0 +1,5 @@
+order_id,customer_id,segment,amount
+ORD-101,CUST-1,Enterprise,1500.0
+ORD-102,CUST-2,Mid-Market,800.0
+ORD-103,CUST-3,SMB,350.0
+ORD-104,CUST-4,Enterprise,2200.0
