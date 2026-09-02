@@ -1,9 +1,12 @@
+import datetime
 import io
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
 from alert_config import ALERT_THRESHOLDS
+from report_generator import generate_report
+from email_sender import send_report
 
 st.set_page_config(page_title="Real-Time KPI & Workflow Analytics", layout="wide")
 
@@ -274,6 +277,24 @@ if page == "KPI Dashboard":
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Histogram requires numeric 'revenue' column.")
+
+    st.divider()
+    st.header("Automated Report Generation & Delivery")
+    with st.expander("Generate & Email Summary Report", expanded=False):
+        report_date_input = st.date_input("Report Date", value=datetime.date.today())
+        if st.button("Generate Structured Summary Report"):
+            report_text = generate_report(filtered_df, report_date_input)
+            st.text_area("Generated Report", report_text, height=220)
+            st.session_state["last_generated_report"] = report_text
+
+        recipient_email = st.text_input("Recipient Email", value="stakeholder@example.com")
+        if st.button("Send Report via Email"):
+            rep_text = st.session_state.get("last_generated_report") or generate_report(filtered_df, report_date_input)
+            sent = send_report(rep_text, recipient_email)
+            if sent:
+                st.success(f"Report emailed successfully to {recipient_email}!")
+            else:
+                st.warning("Email delivery skipped or failed. Ensure SENDER_EMAIL and SENDER_PASSWORD environment variables are set.")
 
 
 # ==========================================
