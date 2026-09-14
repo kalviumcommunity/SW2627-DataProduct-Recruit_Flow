@@ -22,6 +22,7 @@ from app.auth import get_password_hash, verify_password, create_access_token, ge
 
 # backend/app/main.py
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.api import analytics_routes, upload_routes, batch_routes
 
 # Initialize the FastAPI application
@@ -29,6 +30,15 @@ app = FastAPI(
     title="Recruitment Funnel Analytics API",
     description="Backend API for Recruitment funnel drop-off analytics & user auth.",
     version="0.1.0"
+)
+
+# Enable CORS for frontend integration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Automatically create database tables on startup.
