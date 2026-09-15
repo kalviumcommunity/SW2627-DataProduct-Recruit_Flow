@@ -104,18 +104,19 @@ def validate_canonical_value(value: str, allowed_values: set[str]) -> Tuple[bool
     return False, cleaned
 
 def reference_exists(conn, table: str, column: str, value: str) -> bool:
-    """Checks whether a canonical reference row exists in core."""
+    """Checks whether a canonical reference row exists in core or staging."""
     if not value:
         return False
+    table_name = table.split(".")[-1]
     with conn.cursor() as cur:
         cur.execute(
             f"""
-            SELECT 1
-            FROM {table}
-            WHERE {column} = %s
+            SELECT 1 FROM core.{table_name} WHERE {column} = %s
+            UNION ALL
+            SELECT 1 FROM staging.{table_name} WHERE {column} = %s
             LIMIT 1
             """,
-            (value,),
+            (value, value),
         )
         return cur.fetchone() is not None
 

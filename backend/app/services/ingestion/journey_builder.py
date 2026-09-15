@@ -137,6 +137,9 @@ def _insert_derived_stage_event(
     dropoff_reason: Optional[str] = None,
     feedback: Optional[str] = None,
 ) -> bool:
+    if dropoff_flag and not dropoff_reason:
+        dropoff_reason = "Unknown"
+
     stage_id = _get_stage_id(cur, stage_name)
     if not stage_id:
         print(f"Warning: Stage '{stage_name}' not found in core.stages. Skipping {stage_event_id}")
